@@ -168,16 +168,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .update({ name })
         .eq('id', data.user.id);
 
-      // For demo purposes, we'll create the role directly
-      // In production, this would be done by an admin
-      // First check if user has any role, if not, allow self-assignment for first user
+      // For demo purposes, assign role directly for the first admin
+      // Check if any roles exist, if not make this user admin
       const { count } = await supabase
         .from('user_roles')
         .select('*', { count: 'exact', head: true });
 
       if (count === 0) {
-        // First user becomes admin automatically
-        await supabase.rpc('assign_first_admin', { user_id: data.user.id });
+        // First user becomes admin automatically - use service role via edge function or manual setup
+        // For now, just insert the role (RLS allows this for first user via special policy)
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: data.user.id, role: 'admin' });
+        
+        if (roleError) {
+          console.log('Role assignment will be done by admin:', roleError.message);
+        }
       }
     }
 

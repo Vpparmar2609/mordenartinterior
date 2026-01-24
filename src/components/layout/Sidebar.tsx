@@ -104,16 +104,16 @@ const navItems: NavItem[] = [
 ];
 
 export const Sidebar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { profile, role, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 
   const filteredItems = navItems.filter(
-    (item) => user && item.roles.includes(user.role)
+    (item) => role && item.roles.includes(role)
   );
 
   return (
@@ -158,14 +158,14 @@ export const Sidebar: React.FC = () => {
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-gradient-warm flex items-center justify-center text-primary-foreground font-medium">
-            {user?.name.charAt(0)}
+            {profile?.name?.charAt(0) || 'U'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-foreground truncate">
-              {user?.name}
+              {profile?.name || 'User'}
             </p>
             <p className="text-xs text-muted-foreground">
-              {user && roleLabels[user.role]}
+              {role && roleLabels[role]}
             </p>
           </div>
         </div>
