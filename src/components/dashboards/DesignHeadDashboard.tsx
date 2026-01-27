@@ -1,6 +1,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCard } from '@/components/dashboard/StatsCard';
+import { useProjects } from '@/hooks/useProjects';
+import { useUsers } from '@/hooks/useUsers';
+import { ProjectList } from '@/components/projects/ProjectList';
 import { 
   FolderKanban, 
   Users, 
@@ -11,36 +14,46 @@ import {
 } from 'lucide-react';
 
 export const DesignHeadDashboard: React.FC = () => {
+  const { projects, isLoading: projectsLoading } = useProjects();
+  const { getUsersByRole } = useUsers();
+
+  const designProjects = projects.filter(p => 
+    ['design_in_progress', 'design_approval_pending'].includes(p.status)
+  );
+  const approvedProjects = projects.filter(p => p.status === 'design_approved');
+  const pendingApproval = projects.filter(p => p.status === 'design_approval_pending');
+  const designers = getUsersByRole('designer');
+
   const stats = [
     {
       title: 'Assigned Projects',
-      value: '12',
+      value: projectsLoading ? '...' : designProjects.length.toString(),
       icon: <FolderKanban className="w-5 h-5" />,
     },
     {
       title: 'Design In Progress',
-      value: '6',
+      value: projectsLoading ? '...' : projects.filter(p => p.status === 'design_in_progress').length.toString(),
       icon: <Palette className="w-5 h-5" />,
     },
     {
       title: 'Pending Approval',
-      value: '3',
+      value: projectsLoading ? '...' : pendingApproval.length.toString(),
       icon: <Clock className="w-5 h-5" />,
-      trend: { value: 2, isPositive: false },
+      trend: pendingApproval.length > 0 ? { value: pendingApproval.length, isPositive: false } : undefined,
     },
     {
       title: 'Approved',
-      value: '3',
+      value: projectsLoading ? '...' : approvedProjects.length.toString(),
       icon: <CheckCircle2 className="w-5 h-5" />,
     },
     {
       title: 'Team Designers',
-      value: '5',
+      value: designers.length.toString(),
       icon: <Users className="w-5 h-5" />,
     },
     {
       title: 'Needs Revision',
-      value: '2',
+      value: '0',
       icon: <AlertCircle className="w-5 h-5" />,
     },
   ];
@@ -67,7 +80,11 @@ export const DesignHeadDashboard: React.FC = () => {
           <CardTitle className="text-lg font-display">Design Approval Queue</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-sm">Projects awaiting design approval will appear here...</p>
+          {pendingApproval.length === 0 ? (
+            <p className="text-muted-foreground text-sm text-center py-4">No projects pending approval</p>
+          ) : (
+            <ProjectList projects={pendingApproval} compact />
+          )}
         </CardContent>
       </Card>
 
@@ -78,7 +95,11 @@ export const DesignHeadDashboard: React.FC = () => {
             <CardTitle className="text-lg font-display">My Projects</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-sm">Assigned projects will be loaded here...</p>
+            {designProjects.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-4">No active design projects</p>
+            ) : (
+              <ProjectList projects={designProjects.slice(0, 5)} compact />
+            )}
           </CardContent>
         </Card>
 
@@ -87,7 +108,20 @@ export const DesignHeadDashboard: React.FC = () => {
             <CardTitle className="text-lg font-display">Design Team</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-sm">Designer list and workload will be shown here...</p>
+            {designers.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-4">No designers assigned</p>
+            ) : (
+              <div className="space-y-2">
+                {designers.map(designer => (
+                  <div key={designer.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                    <div>
+                      <p className="font-medium text-sm">{designer.name}</p>
+                      <p className="text-xs text-muted-foreground">{designer.email}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

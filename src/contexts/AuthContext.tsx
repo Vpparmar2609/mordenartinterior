@@ -25,9 +25,10 @@ export interface AuthState {
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, name: string, role: UserRole) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  bootstrapAdmin: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,20 +50,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error('Error fetching profile:', profileError);
       }
 
-      // Fetch role
+      // Fetch role - use maybeSingle to handle no role case
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (roleError && roleError.code !== 'PGRST116') {
+      if (roleError) {
         console.error('Error fetching role:', roleError);
       }
 
@@ -75,6 +76,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { profile: null, role: null };
     }
   }, []);
+
+  const bootstrapAdmin = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('bootstrap_first_admin');
+      if (error) {
+        console.error('Bootstrap admin error:', error);
+        return false;
+      }
+      if (data) {
+        // Refresh user data to get the new admin role
+        if (state.user) {
+          const { profile, role } = await fetchUserData(state.user.id);
+          setState(prev => ({ ...prev, profile, role }));
+        }
+      }
+      return data;
+    } catch (error) {
+      console.error('Bootstrap admin error:', error);
+      return false;
+    }
+  }, [state.user, fetchUserData]);
 
   useEffect(() => {
     // Set up auth state listener
@@ -90,14 +112,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Fetch user data after auth state change
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserData(session.user.id).then(({ profile, role }) => {
-              setState(prev => ({
-                ...prev,
-                profile,
-                role,
-              }));
-            });
+          setTimeout(async () => {
+            const { profile, role } = await fetchUserData(session.user.id);
+            setState(prev => ({
+              ...prev,
+              profile,
+              role,
+            }));
+            
+            // If no role, try to bootstrap as admin
+            if (!role) {
+              const { data } = await supabase.rpc('bootstrap_first_admin');
+              if (data) {
+                // Refetch role after bootstrap
+                const updated = await fetchUserData(session.user.id);
+                setState(prev => ({
+                  ...prev,
+                  profile: updated.profile,
+                  role: updated.role,
+                }));
+              }
+            }
           }, 0);
         } else {
           setState(prev => ({
@@ -120,12 +155,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
 
       if (session?.user) {
-        fetchUserData(session.user.id).then(({ profile, role }) => {
+        fetchUserData(session.user.id).then(async ({ profile, role }) => {
           setState(prev => ({
             ...prev,
             profile,
             role,
           }));
+          
+          // If no role, try to bootstrap as admin
+          if (!role) {
+            const { data } = await supabase.rpc('bootstrap_first_admin');
+            if (data) {
+              // Refetch role after bootstrap
+              const updated = await fetchUserData(session.user.id);
+              setState(prev => ({
+                ...prev,
+                profile: updated.profile,
+                role: updated.role,
+              }));
+            }
+          }
         });
       }
     });
@@ -145,12 +194,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string, name: string, role: UserRole) => {
+  const signUp = useCallback(async (email: string, password: string, name: string) => {
     setState(prev => ({ ...prev, isLoading: true }));
     
     const redirectUrl = `${window.location.origin}/`;
     
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -160,32 +209,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     });
-
-    if (!error && data.user) {
-      // Update profile name
-      await supabase
-        .from('profiles')
-        .update({ name })
-        .eq('id', data.user.id);
-
-      // For demo purposes, assign role directly for the first admin
-      // Check if any roles exist, if not make this user admin
-      const { count } = await supabase
-        .from('user_roles')
-        .select('*', { count: 'exact', head: true });
-
-      if (count === 0) {
-        // First user becomes admin automatically - use service role via edge function or manual setup
-        // For now, just insert the role (RLS allows this for first user via special policy)
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: data.user.id, role: 'admin' });
-        
-        if (roleError) {
-          console.log('Role assignment will be done by admin:', roleError.message);
-        }
-      }
-    }
 
     setState(prev => ({ ...prev, isLoading: false }));
     return { error };
@@ -215,7 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [state.user, fetchUserData]);
 
   return (
-    <AuthContext.Provider value={{ ...state, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ ...state, signIn, signUp, signOut, refreshProfile, bootstrapAdmin }}>
       {children}
     </AuthContext.Provider>
   );
