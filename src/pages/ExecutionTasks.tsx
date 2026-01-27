@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,63 +11,48 @@ import {
   Camera,
   ChevronDown,
   ChevronRight,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Mock projects with execution tasks
-const mockProjects = [
-  {
-    id: '1',
-    clientName: 'Kumar Residence',
-    progress: 73,
-    supervisor: 'Rajesh Nair',
-    tasks: [
-      { id: 't1', name: 'POP started', status: 'completed', date: '2026-01-10', photos: 3 },
-      { id: 't2', name: 'POP completed', status: 'completed', date: '2026-01-12', photos: 4 },
-      { id: 't3', name: 'Electrical wiring done', status: 'completed', date: '2026-01-14', photos: 2 },
-      { id: 't4', name: 'Plumbing points checked', status: 'completed', date: '2026-01-15', photos: 2 },
-      { id: 't5', name: 'Kitchen bases installed', status: 'completed', date: '2026-01-17', photos: 3 },
-      { id: 't6', name: 'Kitchen shutters installed', status: 'completed', date: '2026-01-19', photos: 3 },
-      { id: 't7', name: 'Wardrobe structures ready', status: 'completed', date: '2026-01-20', photos: 2 },
-      { id: 't8', name: 'Wardrobe shutters & handles', status: 'completed', date: '2026-01-21', photos: 2 },
-      { id: 't9', name: 'TV unit installations', status: 'completed', date: '2026-01-22', photos: 2 },
-      { id: 't10', name: 'Painting started', status: 'completed', date: '2026-01-23', photos: 1 },
-      { id: 't11', name: 'Painting completed', status: 'in_progress', date: null, photos: 0 },
-      { id: 't12', name: 'Lights installation', status: 'pending', date: null, photos: 0 },
-      { id: 't13', name: 'Final cleaning', status: 'pending', date: null, photos: 0 },
-      { id: 't14', name: 'QC checks', status: 'pending', date: null, photos: 0 },
-      { id: 't15', name: 'Handover ready', status: 'pending', date: null, photos: 0 },
-    ],
-  },
-  {
-    id: '2',
-    clientName: 'Patel Apartment',
-    progress: 93,
-    supervisor: 'Deepak Verma',
-    tasks: [
-      { id: 't1', name: 'POP started', status: 'completed', date: '2026-01-05', photos: 2 },
-      { id: 't2', name: 'POP completed', status: 'completed', date: '2026-01-07', photos: 3 },
-      { id: 't3', name: 'Electrical wiring done', status: 'completed', date: '2026-01-09', photos: 2 },
-      { id: 't4', name: 'Plumbing points checked', status: 'completed', date: '2026-01-10', photos: 1 },
-      { id: 't5', name: 'Kitchen bases installed', status: 'completed', date: '2026-01-12', photos: 2 },
-      { id: 't6', name: 'Kitchen shutters installed', status: 'completed', date: '2026-01-14', photos: 2 },
-      { id: 't7', name: 'Wardrobe structures ready', status: 'completed', date: '2026-01-15', photos: 2 },
-      { id: 't8', name: 'Wardrobe shutters & handles', status: 'completed', date: '2026-01-16', photos: 2 },
-      { id: 't9', name: 'TV unit installations', status: 'completed', date: '2026-01-17', photos: 2 },
-      { id: 't10', name: 'Painting started', status: 'completed', date: '2026-01-18', photos: 1 },
-      { id: 't11', name: 'Painting completed', status: 'completed', date: '2026-01-20', photos: 2 },
-      { id: 't12', name: 'Lights installation', status: 'completed', date: '2026-01-21', photos: 2 },
-      { id: 't13', name: 'Final cleaning', status: 'completed', date: '2026-01-22', photos: 1 },
-      { id: 't14', name: 'QC checks', status: 'in_progress', date: null, photos: 0 },
-      { id: 't15', name: 'Handover ready', status: 'pending', date: null, photos: 0 },
-    ],
-  },
-];
+import { useAllExecutionTasks } from '@/hooks/useProjectTasks';
+import { useProjects } from '@/hooks/useProjects';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ExecutionTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedProjects, setExpandedProjects] = useState<string[]>(['1']);
+  const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
+  const { user, role } = useAuth();
+  const { projects, isLoading: projectsLoading } = useProjects();
+  const { tasks: allTasks, isLoading: tasksLoading, updateTask } = useAllExecutionTasks();
+
+  // Group tasks by project
+  const projectsWithTasks = useMemo(() => {
+    const grouped = allTasks.reduce((acc, task) => {
+      const projectId = task.project_id;
+      if (!acc[projectId]) {
+        acc[projectId] = [];
+      }
+      acc[projectId].push(task);
+      return acc;
+    }, {} as Record<string, typeof allTasks>);
+
+    return Object.entries(grouped).map(([projectId, tasks]) => {
+      const project = projects.find(p => p.id === projectId);
+      const completed = tasks.filter(t => t.status === 'completed').length;
+      return {
+        id: projectId,
+        clientName: project?.client_name || 'Unknown',
+        progress: Math.round((completed / 15) * 100),
+        tasks: tasks.sort((a, b) => a.order_index - b.order_index),
+      };
+    });
+  }, [allTasks, projects]);
+
+  // Filter based on search
+  const filteredProjects = projectsWithTasks.filter(p =>
+    p.clientName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const toggleProject = (projectId: string) => {
     setExpandedProjects(prev => 
@@ -99,6 +84,18 @@ const ExecutionTasks: React.FC = () => {
     }
   };
 
+  const handleMarkComplete = (taskId: string) => {
+    updateTask.mutate({ id: taskId, status: 'completed' });
+  };
+
+  if (projectsLoading || tasksLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -121,89 +118,96 @@ const ExecutionTasks: React.FC = () => {
       </div>
 
       {/* Projects with Tasks */}
-      <div className="space-y-4">
-        {mockProjects.map((project, index) => (
-          <Card 
-            key={project.id} 
-            className="glass-card animate-fade-in"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <CardHeader 
-              className="cursor-pointer"
-              onClick={() => toggleProject(project.id)}
+      {filteredProjects.length === 0 ? (
+        <div className="text-center py-12 glass-card rounded-xl">
+          <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredProjects.map((project, index) => (
+            <Card 
+              key={project.id} 
+              className="glass-card animate-fade-in"
+              style={{ animationDelay: `${index * 50}ms` }}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {expandedProjects.includes(project.id) ? (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  )}
-                  <div>
-                    <CardTitle className="text-lg">{project.clientName}</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Supervisor: {project.supervisor} • {project.tasks.filter(t => t.status === 'completed').length}/15 tasks
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <span className="text-lg font-semibold text-primary">{project.progress}%</span>
-                  </div>
-                  <Progress value={project.progress} className="w-32" />
-                </div>
-              </div>
-            </CardHeader>
-            
-            {expandedProjects.includes(project.id) && (
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  {project.tasks.map((task, taskIndex) => (
-                    <div 
-                      key={task.id}
-                      className={cn(
-                        "flex items-center justify-between p-3 rounded-lg",
-                        task.status === 'completed' ? 'bg-success/5' : 
-                        task.status === 'in_progress' ? 'bg-warning/5' : 'bg-muted/30'
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        {getStatusIcon(task.status)}
-                        <span className={cn(
-                          "font-medium",
-                          task.status === 'completed' && 'text-muted-foreground'
-                        )}>
-                          {taskIndex + 1}. {task.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {task.date && (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="w-3 h-3" />
-                            {new Date(task.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                          </div>
-                        )}
-                        {task.photos > 0 && (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Camera className="w-4 h-4" />
-                            {task.photos}
-                          </div>
-                        )}
-                        {getStatusBadge(task.status)}
-                        {task.status !== 'completed' && (
-                          <Button size="sm" variant="outline" className="h-8">
-                            Mark Done
-                          </Button>
-                        )}
-                      </div>
+              <CardHeader 
+                className="cursor-pointer"
+                onClick={() => toggleProject(project.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {expandedProjects.includes(project.id) ? (
+                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    )}
+                    <div>
+                      <CardTitle className="text-lg">{project.clientName}</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {project.tasks.filter(t => t.status === 'completed').length}/15 tasks completed
+                      </p>
                     </div>
-                  ))}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <span className="text-lg font-semibold text-primary">{project.progress}%</span>
+                    </div>
+                    <Progress value={project.progress} className="w-32" />
+                  </div>
                 </div>
-              </CardContent>
-            )}
-          </Card>
-        ))}
-      </div>
+              </CardHeader>
+              
+              {expandedProjects.includes(project.id) && (
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    {project.tasks.map((task, taskIndex) => (
+                      <div 
+                        key={task.id}
+                        className={cn(
+                          "flex items-center justify-between p-3 rounded-lg",
+                          task.status === 'completed' ? 'bg-success/5' : 
+                          task.status === 'in_progress' ? 'bg-warning/5' : 'bg-muted/30'
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          {getStatusIcon(task.status)}
+                          <span className={cn(
+                            "font-medium",
+                            task.status === 'completed' && 'text-muted-foreground'
+                          )}>
+                            {taskIndex + 1}. {task.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {task.completed_date && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(task.completed_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                            </div>
+                          )}
+                          {getStatusBadge(task.status)}
+                          {task.status !== 'completed' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-8"
+                              onClick={() => handleMarkComplete(task.id)}
+                              disabled={updateTask.isPending}
+                            >
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Mark Done
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
