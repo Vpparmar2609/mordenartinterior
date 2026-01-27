@@ -1,30 +1,34 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { roleLabels, UserRole } from '@/types/auth';
+import { useUsers } from '@/hooks/useUsers';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Plus, 
   Search, 
   Mail, 
   Phone,
-  MoreVertical,
   Crown,
   Palette,
   PenTool,
   HardHat,
   Users,
   ClipboardCheck,
-  User
+  User,
+  Shield,
+  AlertCircle
 } from 'lucide-react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from 'sonner';
 
 const roleIcons: Record<UserRole, React.ReactNode> = {
   admin: <Crown className="w-4 h-4" />,
@@ -36,30 +40,58 @@ const roleIcons: Record<UserRole, React.ReactNode> = {
   client: <User className="w-4 h-4" />,
 };
 
-// Mock team members
-const mockTeamMembers = [
-  { id: '1', name: 'Rahul Sharma', email: 'rahul@modernart.com', phone: '+91 98765 43210', role: 'admin' as UserRole, projectCount: 0 },
-  { id: '2', name: 'Priya Patel', email: 'priya@modernart.com', phone: '+91 87654 32109', role: 'design_head' as UserRole, projectCount: 8 },
-  { id: '3', name: 'Amit Kumar', email: 'amit@modernart.com', phone: '+91 76543 21098', role: 'designer' as UserRole, projectCount: 4 },
-  { id: '4', name: 'Sneha Gupta', email: 'sneha@modernart.com', phone: '+91 65432 10987', role: 'designer' as UserRole, projectCount: 3 },
-  { id: '5', name: 'Vikram Singh', email: 'vikram@modernart.com', phone: '+91 54321 09876', role: 'execution_head' as UserRole, projectCount: 10 },
-  { id: '6', name: 'Anjali Reddy', email: 'anjali@modernart.com', phone: '+91 43210 98765', role: 'execution_manager' as UserRole, projectCount: 4 },
-  { id: '7', name: 'Rajesh Nair', email: 'rajesh@modernart.com', phone: '+91 32109 87654', role: 'site_supervisor' as UserRole, projectCount: 2 },
-  { id: '8', name: 'Deepak Verma', email: 'deepak@modernart.com', phone: '+91 21098 76543', role: 'site_supervisor' as UserRole, projectCount: 2 },
+const allRoles: UserRole[] = [
+  'admin',
+  'design_head',
+  'designer',
+  'execution_head',
+  'execution_manager',
+  'site_supervisor',
+  'client'
 ];
 
 const Team: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole | 'all'>('all');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
+  const { users, isLoading, assignRole } = useUsers();
+  const { role: currentUserRole } = useAuth();
 
-  const filteredMembers = mockTeamMembers.filter((member) => {
+  const isAdmin = currentUserRole === 'admin';
+
+  const filteredMembers = users.filter((member) => {
     const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = selectedRole === 'all' || member.role === selectedRole;
+    const matchesRole = selectedRoleFilter === 'all' || member.role === selectedRoleFilter;
     return matchesSearch && matchesRole;
   });
 
-  const roles: (UserRole | 'all')[] = ['all', 'admin', 'design_head', 'designer', 'execution_head', 'execution_manager', 'site_supervisor'];
+  // Sort: users without roles first, then by name
+  const sortedMembers = [...filteredMembers].sort((a, b) => {
+    if (!a.role && b.role) return -1;
+    if (a.role && !b.role) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const handleRoleAssign = async (userId: string, newRole: UserRole) => {
+    try {
+      await assignRole.mutateAsync({ userId, role: newRole });
+      toast.success(`Role assigned successfully!`);
+    } catch (error) {
+      toast.error('Failed to assign role. Please try again.');
+    }
+  };
+
+  const roles: (UserRole | 'all')[] = ['all', ...allRoles.filter(r => r !== 'client')];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading team...</div>
+      </div>
+    );
+  }
+
+  const pendingUsers = users.filter(u => !u.role);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -69,11 +101,24 @@ const Team: React.FC = () => {
           <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">Team Management</h1>
           <p className="text-muted-foreground mt-1">Manage users and their roles</p>
         </div>
-        <Button className="bg-gradient-warm hover:opacity-90">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Team Member
-        </Button>
       </div>
+
+      {/* Pending Role Assignments Alert */}
+      {isAdmin && pendingUsers.length > 0 && (
+        <Card className="border-warning/50 bg-warning/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-foreground">Pending Role Assignments</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {pendingUsers.length} user(s) are waiting for role assignment. Assign roles below to grant them access.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
@@ -91,9 +136,9 @@ const Team: React.FC = () => {
             <Button
               key={role}
               size="sm"
-              variant={selectedRole === role ? 'default' : 'outline'}
-              onClick={() => setSelectedRole(role)}
-              className={selectedRole === role ? 'bg-gradient-warm' : ''}
+              variant={selectedRoleFilter === role ? 'default' : 'outline'}
+              onClick={() => setSelectedRoleFilter(role)}
+              className={selectedRoleFilter === role ? 'bg-gradient-warm' : ''}
             >
               {role === 'all' ? 'All' : roleLabels[role]}
             </Button>
@@ -103,64 +148,82 @@ const Team: React.FC = () => {
 
       {/* Team Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredMembers.map((member, index) => (
+        {sortedMembers.map((member, index) => (
           <Card 
             key={member.id} 
-            className="glass-card animate-fade-in"
+            className={`glass-card animate-fade-in ${!member.role ? 'border-warning/50' : ''}`}
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 bg-gradient-warm">
+                  <Avatar className={`h-12 w-12 ${member.role ? 'bg-gradient-warm' : 'bg-muted'}`}>
                     <AvatarFallback className="bg-transparent text-primary-foreground font-medium">
-                      {member.name.split(' ').map(n => n[0]).join('')}
+                      {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <h3 className="font-medium text-foreground">{member.name}</h3>
-                    <Badge variant="outline" className="mt-1 text-xs gap-1">
-                      {roleIcons[member.role]}
-                      {roleLabels[member.role]}
-                    </Badge>
+                    {member.role ? (
+                      <Badge variant="outline" className="mt-1 text-xs gap-1">
+                        {roleIcons[member.role]}
+                        {roleLabels[member.role]}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="mt-1 text-xs gap-1 border-warning text-warning">
+                        <Shield className="w-3 h-3" />
+                        No Role Assigned
+                      </Badge>
+                    )}
                   </div>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View Profile</DropdownMenuItem>
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                    <DropdownMenuItem>Assign Projects</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">Deactivate</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
               
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Mail className="w-4 h-4" />
-                  {member.email}
+                  <span className="truncate">{member.email}</span>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="w-4 h-4" />
-                  {member.phone}
-                </div>
+                {member.phone && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="w-4 h-4" />
+                    {member.phone}
+                  </div>
+                )}
               </div>
               
-              <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Active Projects</span>
-                <span className="font-medium text-foreground">{member.projectCount}</span>
-              </div>
+              {/* Role Assignment (Admin Only) */}
+              {isAdmin && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <label className="text-xs text-muted-foreground mb-2 block">
+                    {member.role ? 'Change Role' : 'Assign Role'}
+                  </label>
+                  <Select
+                    value={member.role || ''}
+                    onValueChange={(value) => handleRoleAssign(member.id, value as UserRole)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a role..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allRoles.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          <div className="flex items-center gap-2">
+                            {roleIcons[role]}
+                            {roleLabels[role]}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {filteredMembers.length === 0 && (
+      {sortedMembers.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No team members found matching your criteria.</p>
         </div>

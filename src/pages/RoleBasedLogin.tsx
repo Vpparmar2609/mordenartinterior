@@ -39,15 +39,19 @@ const RoleBasedLogin: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);
   
-  const { signIn, signUp, isLoading, isAuthenticated, role } = useAuth();
+  const { signIn, signUp, isLoading, isAuthenticated, role, profile } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (with or without role)
   useEffect(() => {
-    if (isAuthenticated && role) {
-      navigate('/dashboard');
+    if (isAuthenticated && !isLoading) {
+      // Small delay to allow role fetch to complete
+      const timer = setTimeout(() => {
+        navigate('/dashboard');
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, role, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleRoleSelect = (roleToSelect: UserRole) => {
     setSelectedRole(roleToSelect);
@@ -98,19 +102,28 @@ const RoleBasedLogin: React.FC = () => {
     }
   };
 
-  // After login, verify role matches
+  // After login, verify role matches or handle no-role scenario
   useEffect(() => {
-    if (isAuthenticated && role && selectedRole && step === 'credentials') {
-      if (role !== selectedRole) {
-        setRoleError(`Your account is registered as ${roleLabels[role]}, not ${roleLabels[selectedRole]}. Redirecting to your dashboard...`);
-        setTimeout(() => {
+    if (isAuthenticated && step === 'credentials' && !isLoading) {
+      // Give time for role to be fetched
+      const timer = setTimeout(() => {
+        if (role && selectedRole) {
+          if (role !== selectedRole) {
+            setRoleError(`Your account is registered as ${roleLabels[role]}, not ${roleLabels[selectedRole]}. Redirecting to your dashboard...`);
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 2000);
+          } else {
+            navigate('/dashboard');
+          }
+        } else if (!role) {
+          // No role assigned yet - still redirect to dashboard where they'll see appropriate message
           navigate('/dashboard');
-        }, 2000);
-      } else {
-        navigate('/dashboard');
-      }
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, role, selectedRole, step, navigate]);
+  }, [isAuthenticated, role, selectedRole, step, navigate, isLoading]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
