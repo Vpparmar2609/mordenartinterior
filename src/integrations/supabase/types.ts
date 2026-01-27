@@ -645,6 +645,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_default_design_tasks: {
+        Args: { _project_id: string }
+        Returns: undefined
+      }
+      insert_default_execution_tasks: {
+        Args: { _project_id: string }
+        Returns: undefined
+      }
       is_on_project_team: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
