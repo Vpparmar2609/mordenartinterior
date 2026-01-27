@@ -17,6 +17,7 @@ import DailyReports from "./pages/DailyReports";
 import Issues from "./pages/Issues";
 import Approvals from "./pages/Approvals";
 import Messages from "./pages/Messages";
+import Documents from "./pages/Documents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/issues" element={<Issues />} />
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/messages" element={<Messages />} />
+              <Route path="/documents" element={<Documents />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
