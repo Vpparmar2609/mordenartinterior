@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, roleLabels } from '@/types/auth';
 import { Button } from '@/components/ui/button';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import {
   LayoutDashboard,
   FolderKanban,
@@ -18,6 +19,7 @@ import {
   AlertTriangle,
   BarChart3,
   Building2,
+  Bell,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -90,6 +92,12 @@ const navItems: NavItem[] = [
     roles: ['admin', 'design_head', 'designer', 'execution_head', 'client'],
   },
   {
+    icon: <Bell className="w-5 h-5" />,
+    label: 'Notifications',
+    href: '/notifications',
+    roles: ['admin', 'design_head', 'designer', 'execution_head', 'execution_manager', 'site_supervisor', 'client'],
+  },
+  {
     icon: <BarChart3 className="w-5 h-5" />,
     label: 'Analytics',
     href: '/analytics',
@@ -118,18 +126,21 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-50">
-      {/* Logo */}
+      {/* Logo and Notification */}
       <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-warm">
-            <Building2 className="w-6 h-6 text-primary-foreground" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-warm">
+              <Building2 className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-lg font-semibold text-sidebar-foreground">
+                Modern Art
+              </h1>
+              <p className="text-xs text-muted-foreground">Interior Design</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-display text-lg font-semibold text-sidebar-foreground">
-              Modern Art
-            </h1>
-            <p className="text-xs text-muted-foreground">Interior Design</p>
-          </div>
+          <NotificationBell />
         </div>
       </div>
 

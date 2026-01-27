@@ -3,8 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { useProjects } from '@/hooks/useProjects';
 import { useUsers } from '@/hooks/useUsers';
+import { useWorkload } from '@/hooks/useWorkload';
 import { useIssues } from '@/hooks/useIssues';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -15,7 +17,8 @@ import {
   HardHat,
   AlertTriangle,
   TrendingUp,
-  UserPlus
+  UserPlus,
+  Briefcase
 } from 'lucide-react';
 import {
   Dialog,
@@ -38,6 +41,7 @@ export const ExecutionHeadDashboard: React.FC = () => {
   const { user } = useAuth();
   const { projects, isLoading: projectsLoading } = useProjects();
   const { getUsersByRole } = useUsers();
+  const { getWorkloadForUser } = useWorkload(['execution_manager', 'site_supervisor']);
   const { issues, isLoading: issuesLoading, updateIssue } = useIssues();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -67,6 +71,24 @@ export const ExecutionHeadDashboard: React.FC = () => {
     
     setIsAssigning(true);
     try {
+      // Check if already assigned
+      const { data: existing } = await supabase
+        .from('project_team')
+        .select('id')
+        .eq('project_id', selectedProject)
+        .eq('user_id', selectedManager)
+        .eq('role', 'execution_manager')
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          title: 'Already assigned',
+          description: 'This manager is already assigned to this project.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('project_team')
         .insert({
@@ -78,6 +100,15 @@ export const ExecutionHeadDashboard: React.FC = () => {
 
       if (error) throw error;
 
+      // Update project status if design is approved and execution hasn't started
+      const project = myProjects.find(p => p.id === selectedProject);
+      if (project?.status === 'design_approved') {
+        await supabase
+          .from('projects')
+          .update({ status: 'execution_started' })
+          .eq('id', selectedProject);
+      }
+
       toast({
         title: 'Manager assigned',
         description: 'Project has been assigned to the execution manager.',
@@ -86,6 +117,7 @@ export const ExecutionHeadDashboard: React.FC = () => {
       setSelectedProject(null);
       setSelectedManager('');
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['workload'] });
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -162,17 +194,18 @@ export const ExecutionHeadDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* My Projects */}
+      {/* My Projects - All projects for assignment */}
       <Card className="glass-card">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-display">My Execution Projects</CardTitle>
+          <Badge variant="secondary">{myProjects.length} total</Badge>
         </CardHeader>
         <CardContent>
           {myProjects.length === 0 ? (
             <p className="text-muted-foreground text-sm text-center py-4">No projects assigned to you</p>
           ) : (
             <div className="space-y-3">
-              {myProjects.slice(0, 6).map(project => (
+              {myProjects.map(project => (
                 <div key={project.id} className="p-4 rounded-lg bg-muted/30">
                   <div className="flex items-center justify-between mb-2">
                     <div>
@@ -243,7 +276,7 @@ export const ExecutionHeadDashboard: React.FC = () => {
 
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-lg font-display">Team Overview</CardTitle>
+            <CardTitle className="text-lg font-display">Team & Workload</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -253,11 +286,23 @@ export const ExecutionHeadDashboard: React.FC = () => {
                   <p className="text-xs text-muted-foreground">No managers available</p>
                 ) : (
                   <div className="space-y-1">
-                    {executionManagers.map(manager => (
-                      <div key={manager.id} className="flex items-center justify-between p-2 rounded bg-muted/20">
-                        <span className="text-sm">{manager.name}</span>
-                      </div>
-                    ))}
+                    {executionManagers.map(manager => {
+                      const workload = getWorkloadForUser(manager.id);
+                      return (
+                        <div key={manager.id} className="flex items-center justify-between p-2 rounded bg-muted/20">
+                          <span className="text-sm">{manager.name}</span>
+                          <div className="flex items-center gap-1">
+                            <Briefcase className="w-3 h-3 text-muted-foreground" />
+                            <span className={`text-xs font-medium ${
+                              workload === 0 ? 'text-success' :
+                              workload <= 2 ? 'text-warning' : 'text-destructive'
+                            }`}>
+                              {workload}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -267,11 +312,23 @@ export const ExecutionHeadDashboard: React.FC = () => {
                   <p className="text-xs text-muted-foreground">No supervisors available</p>
                 ) : (
                   <div className="space-y-1">
-                    {siteSupervisors.slice(0, 4).map(supervisor => (
-                      <div key={supervisor.id} className="flex items-center justify-between p-2 rounded bg-muted/20">
-                        <span className="text-sm">{supervisor.name}</span>
-                      </div>
-                    ))}
+                    {siteSupervisors.slice(0, 4).map(supervisor => {
+                      const workload = getWorkloadForUser(supervisor.id);
+                      return (
+                        <div key={supervisor.id} className="flex items-center justify-between p-2 rounded bg-muted/20">
+                          <span className="text-sm">{supervisor.name}</span>
+                          <div className="flex items-center gap-1">
+                            <Briefcase className="w-3 h-3 text-muted-foreground" />
+                            <span className={`text-xs font-medium ${
+                              workload === 0 ? 'text-success' :
+                              workload <= 2 ? 'text-warning' : 'text-destructive'
+                            }`}>
+                              {workload}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -294,11 +351,19 @@ export const ExecutionHeadDashboard: React.FC = () => {
                   <SelectValue placeholder="Choose a manager" />
                 </SelectTrigger>
                 <SelectContent>
-                  {executionManagers.map(manager => (
-                    <SelectItem key={manager.id} value={manager.id}>
-                      {manager.name}
-                    </SelectItem>
-                  ))}
+                  {executionManagers.map(manager => {
+                    const workload = getWorkloadForUser(manager.id);
+                    return (
+                      <SelectItem key={manager.id} value={manager.id}>
+                        <div className="flex items-center justify-between w-full gap-4">
+                          <span>{manager.name}</span>
+                          <Badge variant={workload === 0 ? 'default' : workload <= 2 ? 'secondary' : 'destructive'}>
+                            {workload} projects
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
