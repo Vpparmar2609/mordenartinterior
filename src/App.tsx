@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import Team from "./pages/Team";
 import DesignTasks from "./pages/DesignTasks";
 import ExecutionTasks from "./pages/ExecutionTasks";
@@ -47,6 +48,7 @@ const App = () => (
             <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
               <Route path="/team" element={<Team />} />
               <Route path="/design-tasks" element={<DesignTasks />} />
               <Route path="/execution-tasks" element={<ExecutionTasks />} />

@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Progress } from '@/components/ui/progress';
+import { useProjects } from '@/hooks/useProjects';
 import { 
   FolderKanban, 
   CheckCircle2, 
@@ -11,35 +12,33 @@ import {
 } from 'lucide-react';
 
 export const DesignerDashboard: React.FC = () => {
+  const { projects, isLoading } = useProjects();
+
+  const myProjects = projects.filter(p => 
+    ['design_in_progress', 'design_approval_pending'].includes(p.status)
+  );
+
   const stats = [
     {
       title: 'My Projects',
-      value: '4',
+      value: isLoading ? '...' : myProjects.length.toString(),
       icon: <FolderKanban className="w-5 h-5" />,
     },
     {
       title: 'Tasks Completed',
-      value: '32',
+      value: '0',
       icon: <CheckCircle2 className="w-5 h-5" />,
     },
     {
       title: 'Pending Tasks',
-      value: '18',
+      value: '0',
       icon: <Clock className="w-5 h-5" />,
     },
     {
       title: 'Files Uploaded',
-      value: '56',
+      value: '0',
       icon: <Upload className="w-5 h-5" />,
     },
-  ];
-
-  // Mock project progress data
-  const projectProgress = [
-    { name: 'Kumar Residence', progress: 80, tasks: '12/15' },
-    { name: 'Sharma Villa', progress: 53, tasks: '8/15' },
-    { name: 'Patel Apartment', progress: 27, tasks: '4/15' },
-    { name: 'Singh Home', progress: 13, tasks: '2/15' },
   ];
 
   return (
@@ -63,18 +62,22 @@ export const DesignerDashboard: React.FC = () => {
           <CardTitle className="text-lg font-display">My Projects</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {projectProgress.map((project) => (
-            <div key={project.name} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-foreground">{project.name}</span>
-                <span className="text-muted-foreground">{project.tasks} tasks</span>
+          {myProjects.length === 0 ? (
+            <p className="text-muted-foreground text-sm text-center py-4">No projects assigned</p>
+          ) : (
+            myProjects.map((project) => (
+              <div key={project.id} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-foreground">{project.client_name}</span>
+                  <span className="text-muted-foreground">{project.progress}%</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Progress value={project.progress} className="flex-1" />
+                  <span className="text-sm font-medium text-primary">{project.progress}%</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Progress value={project.progress} className="flex-1" />
-                <span className="text-sm font-medium text-primary">{project.progress}%</span>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </CardContent>
       </Card>
 
@@ -88,7 +91,7 @@ export const DesignerDashboard: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-sm">Design task checklist will appear here...</p>
+            <p className="text-muted-foreground text-sm text-center py-4">No pending tasks</p>
           </CardContent>
         </Card>
 
@@ -100,7 +103,7 @@ export const DesignerDashboard: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-sm">Recently uploaded design files will appear here...</p>
+            <p className="text-muted-foreground text-sm text-center py-4">No recent uploads</p>
           </CardContent>
         </Card>
       </div>
