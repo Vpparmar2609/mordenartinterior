@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Search, 
   Plus,
   AlertTriangle,
   Clock,
   CheckCircle2,
-  ChevronDown
+  Loader2
 } from 'lucide-react';
 import {
   Select,
@@ -18,77 +19,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-
-// Mock issues
-const mockIssues = [
-  {
-    id: '1',
-    project: 'Kumar Residence',
-    type: 'Material Delay',
-    description: 'Modular kitchen shutters delayed by vendor. Expected 3 days late.',
-    severity: 'high',
-    status: 'open',
-    reportedBy: 'Rajesh Nair',
-    reportedAt: '2026-01-23T10:30:00',
-    assignedTo: 'Anjali Reddy',
-  },
-  {
-    id: '2',
-    project: 'Kumar Residence',
-    type: 'Labour Shortage',
-    description: 'Two painters did not report today. Need to arrange backup.',
-    severity: 'medium',
-    status: 'in_progress',
-    reportedBy: 'Rajesh Nair',
-    reportedAt: '2026-01-24T08:00:00',
-    assignedTo: 'Vikram Singh',
-  },
-  {
-    id: '3',
-    project: 'Patel Apartment',
-    type: 'Quality Rework',
-    description: 'Minor paint touch-ups needed in bedroom 2. Some areas have uneven finish.',
-    severity: 'low',
-    status: 'in_progress',
-    reportedBy: 'Deepak Verma',
-    reportedAt: '2026-01-24T11:00:00',
-    assignedTo: 'Deepak Verma',
-  },
-  {
-    id: '4',
-    project: 'Sharma Villa',
-    type: 'Client Change Request',
-    description: 'Client wants to change TV unit color from walnut to white oak.',
-    severity: 'medium',
-    status: 'open',
-    reportedBy: 'Amit Kumar',
-    reportedAt: '2026-01-22T14:30:00',
-    assignedTo: null,
-  },
-  {
-    id: '5',
-    project: 'Kumar Residence',
-    type: 'Vendor Issue',
-    description: 'Electrician did not arrive for scheduled work.',
-    severity: 'high',
-    status: 'resolved',
-    reportedBy: 'Rajesh Nair',
-    reportedAt: '2026-01-20T09:00:00',
-    assignedTo: 'Anjali Reddy',
-    resolvedAt: '2026-01-20T16:00:00',
-  },
-];
+import { useIssues } from '@/hooks/useIssues';
+import { useProjects } from '@/hooks/useProjects';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Issues: React.FC = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
-  const filteredIssues = mockIssues.filter((issue) => {
-    const matchesSearch = issue.project.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  // Form state
+  const [newIssue, setNewIssue] = useState({
+    project_id: '',
+    issue_type: '',
+    description: '',
+    severity: 'medium' as 'low' | 'medium' | 'high',
+  });
+
+  const { issues, isLoading } = useIssues();
+  const { projects } = useProjects();
+
+  const getProjectName = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    return project?.client_name || 'Unknown Project';
+  };
+
+  const filteredIssues = issues.filter((issue) => {
+    const projectName = issue.project?.client_name || getProjectName(issue.project_id);
+    const matchesSearch = projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          issue.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         issue.type.toLowerCase().includes(searchQuery.toLowerCase());
+                         issue.issue_type.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || issue.status === statusFilter;
     const matchesSeverity = severityFilter === 'all' || issue.severity === severityFilter;
     return matchesSearch && matchesStatus && matchesSeverity;
@@ -116,8 +92,64 @@ const Issues: React.FC = () => {
     }
   };
 
-  const openCount = mockIssues.filter(i => i.status === 'open').length;
-  const inProgressCount = mockIssues.filter(i => i.status === 'in_progress').length;
+  const handleCreateIssue = async () => {
+    if (!user || !newIssue.project_id || !newIssue.issue_type || !newIssue.description) {
+      toast({
+        title: 'Missing fields',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const { error } = await supabase
+        .from('issues')
+        .insert({
+          project_id: newIssue.project_id,
+          issue_type: newIssue.issue_type,
+          description: newIssue.description,
+          severity: newIssue.severity,
+          reported_by: user.id,
+          status: 'open',
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Issue reported',
+        description: 'Your issue has been submitted.',
+      });
+      setShowCreateDialog(false);
+      setNewIssue({
+        project_id: '',
+        issue_type: '',
+        description: '',
+        severity: 'medium',
+      });
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const openCount = issues.filter(i => i.status === 'open').length;
+  const inProgressCount = issues.filter(i => i.status === 'in_progress').length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -129,7 +161,7 @@ const Issues: React.FC = () => {
             {openCount} open, {inProgressCount} in progress
           </p>
         </div>
-        <Button className="bg-gradient-warm hover:opacity-90">
+        <Button className="bg-gradient-warm hover:opacity-90" onClick={() => setShowCreateDialog(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Report Issue
         </Button>
@@ -171,52 +203,141 @@ const Issues: React.FC = () => {
       </div>
 
       {/* Issues List */}
-      <div className="space-y-4">
-        {filteredIssues.map((issue, index) => (
-          <Card 
-            key={issue.id} 
-            className={cn(
-              "glass-card animate-fade-in",
-              issue.status === 'open' && issue.severity === 'high' && 'border-destructive/30'
-            )}
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium text-foreground">{issue.project}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-sm text-muted-foreground">{issue.type}</span>
+      {filteredIssues.length === 0 ? (
+        <Card className="glass-card">
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">No issues found matching your criteria.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredIssues.map((issue, index) => (
+            <Card 
+              key={issue.id} 
+              className={cn(
+                "glass-card animate-fade-in",
+                issue.status === 'open' && issue.severity === 'high' && 'border-destructive/30'
+              )}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-medium text-foreground">{issue.project?.client_name || getProjectName(issue.project_id)}</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-sm text-muted-foreground">{issue.issue_type}</span>
+                    </div>
+                    <p className="text-sm text-foreground mb-3">{issue.description}</p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>Reported by {issue.reporter?.name || 'Unknown'}</span>
+                      <span>•</span>
+                      <span>{new Date(issue.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                      {issue.assignee && (
+                        <>
+                          <span>•</span>
+                          <span>Assigned to {issue.assignee.name}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-foreground mb-3">{issue.description}</p>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>Reported by {issue.reportedBy}</span>
-                    <span>•</span>
-                    <span>{new Date(issue.reportedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                    {issue.assignedTo && (
-                      <>
-                        <span>•</span>
-                        <span>Assigned to {issue.assignedTo}</span>
-                      </>
-                    )}
+                  <div className="flex flex-col items-end gap-2">
+                    {getSeverityBadge(issue.severity)}
+                    {getStatusBadge(issue.status)}
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  {getSeverityBadge(issue.severity)}
-                  {getStatusBadge(issue.status)}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredIssues.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No issues found matching your criteria.</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
+
+      {/* Create Issue Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report New Issue</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Project</label>
+              <Select 
+                value={newIssue.project_id} 
+                onValueChange={(value) => setNewIssue({ ...newIssue, project_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map(project => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.client_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Issue Type</label>
+              <Select 
+                value={newIssue.issue_type} 
+                onValueChange={(value) => setNewIssue({ ...newIssue, issue_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Material Delay">Material Delay</SelectItem>
+                  <SelectItem value="Labour Shortage">Labour Shortage</SelectItem>
+                  <SelectItem value="Quality Rework">Quality Rework</SelectItem>
+                  <SelectItem value="Client Change Request">Client Change Request</SelectItem>
+                  <SelectItem value="Vendor Issue">Vendor Issue</SelectItem>
+                  <SelectItem value="Safety Concern">Safety Concern</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Severity</label>
+              <Select 
+                value={newIssue.severity} 
+                onValueChange={(value: 'low' | 'medium' | 'high') => setNewIssue({ ...newIssue, severity: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Textarea
+                placeholder="Describe the issue in detail..."
+                value={newIssue.description}
+                onChange={(e) => setNewIssue({ ...newIssue, description: e.target.value })}
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="hero" 
+              onClick={handleCreateIssue}
+              disabled={isCreating || !newIssue.project_id || !newIssue.issue_type || !newIssue.description}
+            >
+              {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Report Issue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
