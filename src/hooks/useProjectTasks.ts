@@ -7,6 +7,33 @@ type DesignTask = Database['public']['Tables']['design_tasks']['Row'];
 type ExecutionTask = Database['public']['Tables']['execution_tasks']['Row'];
 type TaskStatus = Database['public']['Enums']['task_status'];
 
+// Helper function to update project progress based on completed tasks
+const updateProjectProgress = async (projectId: string) => {
+  // Get completed design tasks count
+  const { count: designCompleted } = await supabase
+    .from('design_tasks')
+    .select('*', { count: 'exact', head: true })
+    .eq('project_id', projectId)
+    .eq('status', 'completed');
+
+  // Get completed execution tasks count
+  const { count: executionCompleted } = await supabase
+    .from('execution_tasks')
+    .select('*', { count: 'exact', head: true })
+    .eq('project_id', projectId)
+    .eq('status', 'completed');
+
+  // Calculate progress: (completed / 30) * 100
+  const totalCompleted = (designCompleted || 0) + (executionCompleted || 0);
+  const progress = Math.round((totalCompleted / 30) * 100);
+
+  // Update project progress
+  await supabase
+    .from('projects')
+    .update({ progress, updated_at: new Date().toISOString() })
+    .eq('id', projectId);
+};
+
 export const useDesignTasks = (projectId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -39,10 +66,17 @@ export const useDesignTasks = (projectId?: string) => {
         .select();
 
       if (error) throw error;
+      
+      // Update project progress after task status change
+      if (data?.[0] && projectId) {
+        await updateProjectProgress(projectId);
+      }
+      
       return data?.[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['design_tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({ title: 'Task updated' });
     },
     onError: (error) => {
@@ -91,10 +125,17 @@ export const useExecutionTasks = (projectId?: string) => {
         .select();
 
       if (error) throw error;
+      
+      // Update project progress after task status change
+      if (data?.[0] && projectId) {
+        await updateProjectProgress(projectId);
+      }
+      
       return data?.[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['execution_tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({ title: 'Task updated' });
     },
     onError: (error) => {
