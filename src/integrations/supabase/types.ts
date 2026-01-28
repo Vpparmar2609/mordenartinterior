@@ -171,25 +171,37 @@ export type Database = {
       }
       design_task_files: {
         Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           file_name: string
           file_url: string
           id: string
+          rejection_reason: string | null
           task_id: string
           uploaded_at: string
           uploaded_by: string
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           file_name: string
           file_url: string
           id?: string
+          rejection_reason?: string | null
           task_id: string
           uploaded_at?: string
           uploaded_by: string
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           file_name?: string
           file_url?: string
           id?: string
+          rejection_reason?: string | null
           task_id?: string
           uploaded_at?: string
           uploaded_by?: string
@@ -250,25 +262,37 @@ export type Database = {
       }
       execution_task_photos: {
         Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           caption: string | null
           id: string
           photo_url: string
+          rejection_reason: string | null
           task_id: string
           uploaded_at: string
           uploaded_by: string
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           caption?: string | null
           id?: string
           photo_url: string
+          rejection_reason?: string | null
           task_id: string
           uploaded_at?: string
           uploaded_by: string
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           caption?: string | null
           id?: string
           photo_url?: string
+          rejection_reason?: string | null
           task_id?: string
           uploaded_at?: string
           uploaded_by?: string
