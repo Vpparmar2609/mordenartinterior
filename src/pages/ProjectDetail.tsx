@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDesignTasks, useExecutionTasks } from '@/hooks/useProjectTasks';
 import { ProjectChat } from '@/components/chat/ProjectChat';
 import { ProjectLifecycleControls } from '@/components/projects/ProjectLifecycleControls';
+import { TeamAssignmentSection } from '@/components/projects/TeamAssignmentSection';
 import { statusLabels, statusColors } from '@/types/project';
 import { 
   ArrowLeft, 
@@ -233,32 +234,14 @@ const ProjectDetail: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Team */}
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="text-lg font-display">Team Assignment</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-accent" />
-                    <span className="text-sm">Design Head</span>
-                  </div>
-                  <span className="font-medium">
-                    {project.design_head_profile?.name || 'Not assigned'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div className="flex items-center gap-2">
-                    <HardHat className="w-4 h-4 text-orange-500" />
-                    <span className="text-sm">Execution Head</span>
-                  </div>
-                  <span className="font-medium">
-                    {project.execution_head_profile?.name || 'Not assigned'}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Team Assignment - Interactive */}
+            <TeamAssignmentSection
+              projectId={project.id}
+              designHeadId={project.design_head_id}
+              executionHeadId={project.execution_head_id}
+              designHeadProfile={project.design_head_profile}
+              executionHeadProfile={project.execution_head_profile}
+            />
           </div>
         </TabsContent>
 
@@ -326,7 +309,7 @@ const ProjectDetail: React.FC = () => {
           <Card className="glass-card">
             <CardHeader>
               <CardTitle className="text-lg font-display flex items-center gap-2">
-                <HardHat className="w-5 h-5 text-orange-500" />
+                <HardHat className="w-5 h-5 text-accent" />
                 Execution Tasks ({executionCompleted}/15)
               </CardTitle>
             </CardHeader>
