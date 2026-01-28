@@ -36,11 +36,10 @@ export const useDesignTasks = (projectId?: string) => {
         .from('design_tasks')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
-      return data;
+      return data?.[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['design_tasks'] });
@@ -89,11 +88,10 @@ export const useExecutionTasks = (projectId?: string) => {
         .from('execution_tasks')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
-      return data;
+      return data?.[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['execution_tasks'] });
@@ -137,11 +135,10 @@ export const useAllDesignTasks = () => {
         .from('design_tasks')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
-      return data;
+      return data?.[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['design_tasks_all'] });
@@ -185,11 +182,10 @@ export const useAllExecutionTasks = () => {
         .from('execution_tasks')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
-      return data;
+      return data?.[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['execution_tasks_all'] });

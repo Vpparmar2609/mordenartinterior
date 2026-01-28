@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProjects } from '@/hooks/useProjects';
+import { useDesignFiles, useExecutionPhotos } from '@/hooks/useTaskFiles';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Home, 
   CheckCircle2, 
@@ -12,7 +15,12 @@ import {
   Image,
   MessageSquare,
   Star,
-  FolderKanban
+  FolderKanban,
+  FileImage,
+  Camera,
+  Download,
+  Loader2,
+  ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -43,6 +51,117 @@ const getStatusColor = (status: string) => {
     completed: 'bg-success/30 text-success',
   };
   return colors[status] || 'bg-muted text-muted-foreground';
+};
+
+interface ProjectPhotosProps {
+  projectId: string;
+}
+
+const ProjectPhotos: React.FC<ProjectPhotosProps> = ({ projectId }) => {
+  const { data: designFiles, isLoading: designLoading } = useDesignFiles(projectId);
+  const { data: executionPhotos, isLoading: executionLoading } = useExecutionPhotos(projectId);
+
+  const getSignedUrl = async (filePath: string, bucket: string) => {
+    if (filePath.startsWith('http')) return filePath;
+    const { data } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(filePath, 60 * 60);
+    return data?.signedUrl || filePath;
+  };
+
+  const handleDownload = async (filePath: string, bucket: string, fileName: string) => {
+    const url = await getSignedUrl(filePath, bucket);
+    window.open(url, '_blank');
+  };
+
+  if (designLoading || executionLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <Tabs defaultValue="design" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="design" className="flex items-center gap-2">
+          <FileImage className="w-4 h-4" />
+          Design ({designFiles?.length || 0})
+        </TabsTrigger>
+        <TabsTrigger value="site" className="flex items-center gap-2">
+          <Camera className="w-4 h-4" />
+          Site Photos ({executionPhotos?.length || 0})
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="design" className="mt-4">
+        {!designFiles || designFiles.length === 0 ? (
+          <p className="text-muted-foreground text-sm text-center py-8">
+            Design files will appear here once uploaded by the design team.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {designFiles.map((file) => (
+              <div 
+                key={file.id} 
+                className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <FileImage className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{file.file_name}</p>
+                  <p className="text-xs text-muted-foreground">{file.task_name}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handleDownload(file.file_url, 'design-files', file.file_name)}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </TabsContent>
+
+      <TabsContent value="site" className="mt-4">
+        {!executionPhotos || executionPhotos.length === 0 ? (
+          <p className="text-muted-foreground text-sm text-center py-8">
+            Site progress photos will appear here once uploaded by the execution team.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {executionPhotos.map((photo) => (
+              <div 
+                key={photo.id} 
+                className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                  <Camera className="w-5 h-5 text-accent" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{photo.file_name}</p>
+                  <p className="text-xs text-muted-foreground">{photo.task_name}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handleDownload(photo.file_url, 'execution-photos', photo.file_name)}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </TabsContent>
+    </Tabs>
+  );
 };
 
 export const ClientDashboard: React.FC = () => {
@@ -172,7 +291,7 @@ export const ClientDashboard: React.FC = () => {
               </Button>
             </div>
 
-            {/* Project Details */}
+            {/* Project Details & Photos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="glass-card">
                 <CardHeader>
@@ -208,12 +327,10 @@ export const ClientDashboard: React.FC = () => {
 
               <Card className="glass-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-display">Site Progress Photos</CardTitle>
+                  <CardTitle className="text-lg font-display">Project Photos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground text-sm text-center py-8">
-                    Progress photos shared by the team will appear here...
-                  </p>
+                  <ProjectPhotos projectId={project.id} />
                 </CardContent>
               </Card>
             </div>

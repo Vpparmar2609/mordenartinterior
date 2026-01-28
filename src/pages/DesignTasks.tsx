@@ -15,9 +15,10 @@ import {
   Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAllDesignTasks, useDesignTasks } from '@/hooks/useProjectTasks';
+import { useAllDesignTasks } from '@/hooks/useProjectTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { useAuth } from '@/contexts/AuthContext';
+import { TaskFileUpload } from '@/components/tasks/TaskFileUpload';
 
 const DesignTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,6 +183,11 @@ const DesignTasks: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex items-center gap-3">
+                          <TaskFileUpload 
+                            taskId={task.id} 
+                            taskType="design" 
+                            compact 
+                          />
                           {getStatusBadge(task.status)}
                           <Button 
                             size="sm" 

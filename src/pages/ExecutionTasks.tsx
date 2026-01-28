@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { useAllExecutionTasks } from '@/hooks/useProjectTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { useAuth } from '@/contexts/AuthContext';
+import { TaskFileUpload } from '@/components/tasks/TaskFileUpload';
 
 const ExecutionTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -186,6 +187,11 @@ const ExecutionTasks: React.FC = () => {
                               {new Date(task.completed_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                             </div>
                           )}
+                          <TaskFileUpload 
+                            taskId={task.id} 
+                            taskType="execution" 
+                            compact 
+                          />
                           {getStatusBadge(task.status)}
                           <Button 
                             size="sm" 
