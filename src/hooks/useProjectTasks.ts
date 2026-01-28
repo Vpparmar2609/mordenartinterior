@@ -171,7 +171,7 @@ export const useAllDesignTasks = () => {
   });
 
   const updateTask = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: TaskStatus }) => {
+    mutationFn: async ({ id, status, projectId }: { id: string; status: TaskStatus; projectId?: string }) => {
       const { data, error } = await supabase
         .from('design_tasks')
         .update({ status, updated_at: new Date().toISOString() })
@@ -179,10 +179,18 @@ export const useAllDesignTasks = () => {
         .select();
 
       if (error) throw error;
+      
+      // Update project progress after task status change
+      const taskProjectId = projectId || data?.[0]?.project_id;
+      if (taskProjectId) {
+        await updateProjectProgress(taskProjectId);
+      }
+      
       return data?.[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['design_tasks_all'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({ title: 'Task updated' });
     },
     onError: (error) => {
@@ -218,7 +226,7 @@ export const useAllExecutionTasks = () => {
   });
 
   const updateTask = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: TaskStatus }) => {
+    mutationFn: async ({ id, status, projectId }: { id: string; status: TaskStatus; projectId?: string }) => {
       const { data, error } = await supabase
         .from('execution_tasks')
         .update({ status, updated_at: new Date().toISOString() })
@@ -226,10 +234,18 @@ export const useAllExecutionTasks = () => {
         .select();
 
       if (error) throw error;
+      
+      // Update project progress after task status change
+      const taskProjectId = projectId || data?.[0]?.project_id;
+      if (taskProjectId) {
+        await updateProjectProgress(taskProjectId);
+      }
+      
       return data?.[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['execution_tasks_all'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({ title: 'Task updated' });
     },
     onError: (error) => {
