@@ -73,6 +73,31 @@ export const useUsers = () => {
     },
   });
 
+  const removeUserRole = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: 'Role removed',
+        description: 'User role has been removed.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   const getUsersByRole = (role: UserRole) => {
     return usersQuery.data?.filter(u => u.role === role) ?? [];
   };
@@ -82,6 +107,7 @@ export const useUsers = () => {
     isLoading: usersQuery.isLoading,
     error: usersQuery.error,
     assignRole,
+    removeUserRole,
     getUsersByRole,
     refetch: usersQuery.refetch,
   };

@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { roleLabels, UserRole } from '@/types/auth';
 import { useUsers } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
+import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { 
   Search, 
   Mail, 
@@ -19,7 +20,10 @@ import {
   ClipboardCheck,
   User,
   Shield,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import {
   Select,
@@ -28,6 +32,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 const roleIcons: Record<UserRole, React.ReactNode> = {
@@ -53,7 +68,9 @@ const allRoles: UserRole[] = [
 const Team: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
-  const { users, isLoading, assignRole } = useUsers();
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const { users, isLoading, assignRole, removeUserRole, refetch } = useUsers();
   const { role: currentUserRole } = useAuth();
 
   const isAdmin = currentUserRole === 'admin';
@@ -81,6 +98,18 @@ const Team: React.FC = () => {
     }
   };
 
+  const handleRemoveUser = async (userId: string) => {
+    setRemovingUserId(userId);
+    try {
+      await removeUserRole.mutateAsync(userId);
+      toast.success('User role removed successfully!');
+    } catch (error) {
+      toast.error('Failed to remove user role.');
+    } finally {
+      setRemovingUserId(null);
+    }
+  };
+
   const roles: (UserRole | 'all')[] = ['all', ...allRoles.filter(r => r !== 'client')];
 
   if (isLoading) {
@@ -101,6 +130,12 @@ const Team: React.FC = () => {
           <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">Team Management</h1>
           <p className="text-muted-foreground mt-1">Manage users and their roles</p>
         </div>
+        {isAdmin && (
+          <Button onClick={() => setCreateUserOpen(true)} className="bg-gradient-warm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add User
+          </Button>
+        )}
       </div>
 
       {/* Pending Role Assignments Alert */}
@@ -194,28 +229,67 @@ const Team: React.FC = () => {
               
               {/* Role Assignment (Admin Only) */}
               {isAdmin && (
-                <div className="mt-4 pt-4 border-t border-border">
-                  <label className="text-xs text-muted-foreground mb-2 block">
-                    {member.role ? 'Change Role' : 'Assign Role'}
-                  </label>
-                  <Select
-                    value={member.role || ''}
-                    onValueChange={(value) => handleRoleAssign(member.id, value as UserRole)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a role..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allRoles.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          <div className="flex items-center gap-2">
-                            {roleIcons[role]}
-                            {roleLabels[role]}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="mt-4 pt-4 border-t border-border space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-2 block">
+                      {member.role ? 'Change Role' : 'Assign Role'}
+                    </label>
+                    <Select
+                      value={member.role || ''}
+                      onValueChange={(value) => handleRoleAssign(member.id, value as UserRole)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a role..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allRoles.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            <div className="flex items-center gap-2">
+                              {roleIcons[role]}
+                              {roleLabels[role]}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Remove Role Button */}
+                  {member.role && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          {removingUserId === member.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          ) : (
+                            <Trash2 className="w-4 h-4 mr-2" />
+                          )}
+                          Remove Role
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remove user role?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will remove the role from {member.name}. They will lose access to the app until a new role is assigned.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleRemoveUser(member.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Remove Role
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -228,6 +302,13 @@ const Team: React.FC = () => {
           <p className="text-muted-foreground">No team members found matching your criteria.</p>
         </div>
       )}
+
+      {/* Create User Dialog */}
+      <CreateUserDialog 
+        open={createUserOpen} 
+        onOpenChange={setCreateUserOpen}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 };
