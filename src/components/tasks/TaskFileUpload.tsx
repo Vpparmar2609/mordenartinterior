@@ -13,7 +13,10 @@ import {
   Loader2,
   Download,
   Trash2,
+  Clock,
+  XCircle,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface UploadedFile {
@@ -21,6 +24,7 @@ interface UploadedFile {
   file_name: string;
   file_url: string;
   uploaded_at: string;
+  approval_status?: 'pending' | 'approved' | 'rejected';
 }
 
 interface TaskFileUploadProps {
@@ -259,6 +263,20 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
               >
                 <FileImage className="w-4 h-4 text-primary shrink-0" />
                 <span className="text-sm truncate flex-1">{file.file_name}</span>
+                {file.approval_status && (
+                  <Badge 
+                    variant={
+                      file.approval_status === 'approved' ? 'default' : 
+                      file.approval_status === 'rejected' ? 'destructive' : 'secondary'
+                    }
+                    className="text-xs"
+                  >
+                    {file.approval_status === 'pending' && <Clock className="w-3 h-3 mr-1" />}
+                    {file.approval_status === 'approved' && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                    {file.approval_status === 'rejected' && <XCircle className="w-3 h-3 mr-1" />}
+                    {file.approval_status}
+                  </Badge>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"

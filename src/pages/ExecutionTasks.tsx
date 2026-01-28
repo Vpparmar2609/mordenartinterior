@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Search, 
   CheckCircle2, 
@@ -18,14 +19,18 @@ import { cn } from '@/lib/utils';
 import { useAllExecutionTasks } from '@/hooks/useProjectTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { TaskFileUpload } from '@/components/tasks/TaskFileUpload';
+import { FileApprovalSection } from '@/components/approvals/FileApprovalSection';
 
 const ExecutionTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
   const { user, role } = useAuth();
+  const { isAdmin, isExecutionHead, isExecutionManager } = useUserRole();
   const { projects, isLoading: projectsLoading } = useProjects();
   const { tasks: allTasks, isLoading: tasksLoading, updateTask } = useAllExecutionTasks();
+  const canApproveFiles = isAdmin || isExecutionHead || isExecutionManager;
 
   // Group tasks by project
   const projectsWithTasks = useMemo(() => {
@@ -108,113 +113,156 @@ const ExecutionTasks: React.FC = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search projects..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+      {canApproveFiles ? (
+        <Tabs defaultValue="tasks" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="approvals">Photo Approvals</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="tasks" className="space-y-4">
+            {/* Search */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-      {/* Projects with Tasks */}
-      {filteredProjects.length === 0 ? (
-        <div className="text-center py-12 glass-card rounded-xl">
-          <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
-        </div>
+            {/* Projects with Tasks */}
+            {filteredProjects.length === 0 ? (
+              <div className="text-center py-12 glass-card rounded-xl">
+                <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredProjects.map((project, index) => renderProjectCard(project, index))}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="approvals">
+            <FileApprovalSection type="execution" />
+          </TabsContent>
+        </Tabs>
       ) : (
-        <div className="space-y-4">
-          {filteredProjects.map((project, index) => (
-            <Card 
-              key={project.id} 
-              className="glass-card animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <CardHeader 
-                className="cursor-pointer"
-                onClick={() => toggleProject(project.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {expandedProjects.includes(project.id) ? (
-                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    )}
-                    <div>
-                      <CardTitle className="text-lg">{project.clientName}</CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {project.tasks.filter(t => t.status === 'completed').length}/15 tasks completed
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <span className="text-lg font-semibold text-primary">{project.progress}%</span>
-                    </div>
-                    <Progress value={project.progress} className="w-32" />
-                  </div>
-                </div>
-              </CardHeader>
-              
-              {expandedProjects.includes(project.id) && (
-                <CardContent className="pt-0">
-                  <div className="space-y-2">
-                    {project.tasks.map((task, taskIndex) => (
-                      <div 
-                        key={task.id}
-                        className={cn(
-                          "flex items-center justify-between p-3 rounded-lg",
-                          task.status === 'completed' ? 'bg-success/5' : 
-                          task.status === 'in_progress' ? 'bg-warning/5' : 'bg-muted/30'
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          {getStatusIcon(task.status)}
-                          <span className={cn(
-                            "font-medium",
-                            task.status === 'completed' && 'text-muted-foreground'
-                          )}>
-                            {taskIndex + 1}. {task.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {task.completed_date && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(task.completed_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                            </div>
-                          )}
-                          <TaskFileUpload 
-                            taskId={task.id} 
-                            taskType="execution" 
-                            compact 
-                          />
-                          {getStatusBadge(task.status)}
-                          <Button 
-                            size="sm" 
-                            variant={task.status === 'completed' ? 'ghost' : 'outline'}
-                            className="h-8"
-                            onClick={() => handleToggleStatus(task.id, task.status)}
-                            disabled={updateTask.isPending}
-                          >
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            {task.status === 'completed' ? 'Undo' : 'Mark Done'}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          ))}
-        </div>
+        <>
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Projects with Tasks */}
+          {filteredProjects.length === 0 ? (
+            <div className="text-center py-12 glass-card rounded-xl">
+              <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredProjects.map((project, index) => renderProjectCard(project, index))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
+
+  function renderProjectCard(project: typeof filteredProjects[0], index: number) {
+    return (
+      <Card 
+        key={project.id} 
+        className="glass-card animate-fade-in"
+        style={{ animationDelay: `${index * 50}ms` }}
+      >
+        <CardHeader 
+          className="cursor-pointer"
+          onClick={() => toggleProject(project.id)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {expandedProjects.includes(project.id) ? (
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              )}
+              <div>
+                <CardTitle className="text-lg">{project.clientName}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {project.tasks.filter(t => t.status === 'completed').length}/15 tasks completed
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <span className="text-lg font-semibold text-primary">{project.progress}%</span>
+              </div>
+              <Progress value={project.progress} className="w-32" />
+            </div>
+          </div>
+        </CardHeader>
+        
+        {expandedProjects.includes(project.id) && (
+          <CardContent className="pt-0">
+            <div className="space-y-2">
+              {project.tasks.map((task, taskIndex) => (
+                <div 
+                  key={task.id}
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-lg",
+                    task.status === 'completed' ? 'bg-success/5' : 
+                    task.status === 'in_progress' ? 'bg-warning/5' : 'bg-muted/30'
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(task.status)}
+                    <span className={cn(
+                      "font-medium",
+                      task.status === 'completed' && 'text-muted-foreground'
+                    )}>
+                      {taskIndex + 1}. {task.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {task.completed_date && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(task.completed_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </div>
+                    )}
+                    <TaskFileUpload 
+                      taskId={task.id} 
+                      taskType="execution" 
+                      compact 
+                    />
+                    {getStatusBadge(task.status)}
+                    <Button 
+                      size="sm" 
+                      variant={task.status === 'completed' ? 'ghost' : 'outline'}
+                      className="h-8"
+                      onClick={() => handleToggleStatus(task.id, task.status)}
+                      disabled={updateTask.isPending}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      {task.status === 'completed' ? 'Undo' : 'Mark Done'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    );
+  }
 };
 
 export default ExecutionTasks;

@@ -8,6 +8,7 @@ export interface TaskFile {
   uploaded_at: string;
   task_id: string;
   task_name?: string;
+  approval_status?: 'pending' | 'approved' | 'rejected';
 }
 
 // Fetch design files for a project
@@ -24,10 +25,12 @@ export const useDesignFiles = (projectId?: string) => {
           file_name,
           file_url,
           uploaded_at,
+          approval_status,
           task_id,
           design_tasks!inner(name, project_id)
         `)
-        .eq('design_tasks.project_id', projectId);
+        .eq('design_tasks.project_id', projectId)
+        .eq('approval_status', 'approved'); // Only show approved files
 
       if (error) throw error;
 
@@ -38,6 +41,7 @@ export const useDesignFiles = (projectId?: string) => {
         uploaded_at: f.uploaded_at,
         task_id: f.task_id,
         task_name: f.design_tasks?.name,
+        approval_status: f.approval_status,
       })) as TaskFile[];
     },
     enabled: !!projectId,
@@ -58,10 +62,12 @@ export const useExecutionPhotos = (projectId?: string) => {
           photo_url,
           caption,
           uploaded_at,
+          approval_status,
           task_id,
           execution_tasks!inner(name, project_id)
         `)
-        .eq('execution_tasks.project_id', projectId);
+        .eq('execution_tasks.project_id', projectId)
+        .eq('approval_status', 'approved'); // Only show approved photos
 
       if (error) throw error;
 
@@ -72,6 +78,7 @@ export const useExecutionPhotos = (projectId?: string) => {
         uploaded_at: f.uploaded_at,
         task_id: f.task_id,
         task_name: f.execution_tasks?.name,
+        approval_status: f.approval_status,
       })) as TaskFile[];
     },
     enabled: !!projectId,
@@ -86,14 +93,14 @@ export const useTaskFilesForTask = (taskId: string, taskType: 'design' | 'execut
       if (taskType === 'design') {
         const { data, error } = await supabase
           .from('design_task_files')
-          .select('id, file_name, file_url, uploaded_at')
+          .select('id, file_name, file_url, uploaded_at, approval_status')
           .eq('task_id', taskId);
         if (error) throw error;
         return data || [];
       } else {
         const { data, error } = await supabase
           .from('execution_task_photos')
-          .select('id, caption, photo_url, uploaded_at')
+          .select('id, caption, photo_url, uploaded_at, approval_status')
           .eq('task_id', taskId);
         if (error) throw error;
         return (data || []).map((p) => ({
@@ -101,6 +108,7 @@ export const useTaskFilesForTask = (taskId: string, taskType: 'design' | 'execut
           file_name: p.caption || 'Photo',
           file_url: p.photo_url,
           uploaded_at: p.uploaded_at,
+          approval_status: p.approval_status,
         }));
       }
     },
