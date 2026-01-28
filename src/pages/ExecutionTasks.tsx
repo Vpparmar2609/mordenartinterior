@@ -84,8 +84,9 @@ const ExecutionTasks: React.FC = () => {
     }
   };
 
-  const handleMarkComplete = (taskId: string) => {
-    updateTask.mutate({ id: taskId, status: 'completed' });
+  const handleToggleStatus = (taskId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    updateTask.mutate({ id: taskId, status: newStatus as any });
   };
 
   if (projectsLoading || tasksLoading) {
@@ -186,18 +187,16 @@ const ExecutionTasks: React.FC = () => {
                             </div>
                           )}
                           {getStatusBadge(task.status)}
-                          {task.status !== 'completed' && (
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="h-8"
-                              onClick={() => handleMarkComplete(task.id)}
-                              disabled={updateTask.isPending}
-                            >
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              Mark Done
-                            </Button>
-                          )}
+                          <Button 
+                            size="sm" 
+                            variant={task.status === 'completed' ? 'ghost' : 'outline'}
+                            className="h-8"
+                            onClick={() => handleToggleStatus(task.id, task.status)}
+                            disabled={updateTask.isPending}
+                          >
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            {task.status === 'completed' ? 'Undo' : 'Mark Done'}
+                          </Button>
                         </div>
                       </div>
                     ))}
