@@ -185,9 +185,6 @@ const DesignTasks: React.FC = () => {
         className="glass-card animate-fade-in"
         style={{ animationDelay: `${index * 50}ms` }}
       >
-        <div className="text-center py-12 glass-card rounded-xl">
-          <p className="text-muted-foreground">No design tasks found. Projects need to be assigned to you.</p>
-        </div>
         <CardHeader 
           className="cursor-pointer"
           onClick={() => toggleProject(project.id)}
