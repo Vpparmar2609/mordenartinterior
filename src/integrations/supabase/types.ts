@@ -561,6 +561,7 @@ export type Database = {
           execution_head_id: string | null
           flat_size: string
           id: string
+          lifecycle_status: string
           location: string
           progress: number
           start_date: string
@@ -581,6 +582,7 @@ export type Database = {
           execution_head_id?: string | null
           flat_size: string
           id?: string
+          lifecycle_status?: string
           location: string
           progress?: number
           start_date: string
@@ -601,6 +603,7 @@ export type Database = {
           execution_head_id?: string | null
           flat_size?: string
           id?: string
+          lifecycle_status?: string
           location?: string
           progress?: number
           start_date?: string

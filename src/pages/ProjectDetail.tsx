@@ -9,6 +9,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDesignTasks, useExecutionTasks } from '@/hooks/useProjectTasks';
 import { ProjectChat } from '@/components/chat/ProjectChat';
+import { ProjectLifecycleControls } from '@/components/projects/ProjectLifecycleControls';
 import { statusLabels, statusColors } from '@/types/project';
 import { 
   ArrowLeft, 
@@ -22,7 +23,8 @@ import {
   MessageSquare,
   CheckCircle2,
   Clock,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -88,10 +90,23 @@ const ProjectDetail: React.FC = () => {
   const status = project.status as keyof typeof statusLabels;
   const colors = statusColors[status];
 
+  const isAdmin = role === 'admin';
   const isClient = role === 'client';
+  const lifecycleStatus = (project as any).lifecycle_status || 'active';
+  const isStopped = lifecycleStatus === 'stopped';
 
   return (
     <div className="space-y-6">
+      {/* Stopped Project Warning */}
+      {isStopped && !isAdmin && (
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-warning/10 border border-warning/30">
+          <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
+          <p className="text-sm text-warning">
+            This project has been stopped by the admin. View-only access is available.
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
@@ -113,9 +128,18 @@ const ProjectDetail: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-sm text-muted-foreground">Progress</div>
-          <div className="text-2xl font-display font-bold text-primary">{project.progress}%</div>
+        <div className="flex items-center gap-4">
+          {/* Admin Lifecycle Controls */}
+          {isAdmin && (
+            <ProjectLifecycleControls 
+              projectId={project.id} 
+              lifecycleStatus={lifecycleStatus} 
+            />
+          )}
+          <div className="text-right">
+            <div className="text-sm text-muted-foreground">Progress</div>
+            <div className="text-2xl font-display font-bold text-primary">{project.progress}%</div>
+          </div>
         </div>
       </div>
 

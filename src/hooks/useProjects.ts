@@ -139,6 +139,61 @@ export const useProjects = () => {
     },
   });
 
+  const updateLifecycleStatus = useMutation({
+    mutationFn: async ({ id, lifecycle_status }: { id: string; lifecycle_status: 'active' | 'stopped' }) => {
+      const { data, error } = await supabase
+        .from('projects')
+        .update({ lifecycle_status })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast({
+        title: variables.lifecycle_status === 'active' ? 'Project Activated' : 'Project Stopped',
+        description: variables.lifecycle_status === 'active' 
+          ? 'Project is now visible to team members.' 
+          : 'Project is now hidden from team members.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteProject = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast({
+        title: 'Project Deleted',
+        description: 'Project has been permanently deleted.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     projects: projectsQuery.data ?? [],
     isLoading: projectsQuery.isLoading,
@@ -146,6 +201,8 @@ export const useProjects = () => {
     createProject,
     updateProject,
     updateProjectStatus,
+    updateLifecycleStatus,
+    deleteProject,
     refetch: projectsQuery.refetch,
   };
 };
