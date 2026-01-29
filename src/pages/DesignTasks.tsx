@@ -46,11 +46,13 @@ const DesignTasks: React.FC = () => {
     return Object.entries(grouped).map(([projectId, tasks]) => {
       const project = projects.find(p => p.id === projectId);
       const completed = tasks.filter(t => t.status === 'completed').length;
+      const totalTasks = 36; // 36 design tasks per project
       return {
         id: projectId,
         clientName: project?.client_name || 'Unknown',
-        progress: Math.round((completed / 15) * 100),
+        progress: Math.round((completed / totalTasks) * 100),
         tasks: tasks.sort((a, b) => a.order_index - b.order_index),
+        totalTasks,
       };
     });
   }, [allTasks, projects]);
@@ -199,7 +201,7 @@ const DesignTasks: React.FC = () => {
               <div>
                 <CardTitle className="text-lg">{project.clientName}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {project.tasks.filter(t => t.status === 'completed').length}/15 tasks completed
+                  {project.tasks.filter(t => t.status === 'completed').length}/{project.totalTasks} tasks completed
                 </p>
               </div>
             </div>
