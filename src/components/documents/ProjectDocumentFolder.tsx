@@ -13,9 +13,12 @@ import {
   Download,
   ExternalLink,
   Calendar,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface DocumentFile {
   id: string;
@@ -36,65 +39,108 @@ const isImageFile = (url: string) => {
   return imageExtensions.some(ext => url.toLowerCase().includes(ext));
 };
 
-const DocumentCard: React.FC<{ doc: DocumentFile }> = ({ doc }) => (
-  <Card className="glass-card overflow-hidden group hover:shadow-lg transition-shadow">
-    <div className="aspect-video bg-muted/50 relative overflow-hidden">
-      {isImageFile(doc.file_url) ? (
-        <img
-          src={doc.file_url}
-          alt={doc.file_name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-          }}
-        />
-      ) : null}
-      <div className={`absolute inset-0 flex items-center justify-center ${isImageFile(doc.file_url) ? 'hidden' : ''}`}>
-        <FileText className="w-12 h-12 text-muted-foreground" />
-      </div>
-      <Badge className="absolute top-2 right-2 bg-accent text-accent-foreground">
-        <CheckCircle2 className="w-3 h-3 mr-1" />
-        Approved
-      </Badge>
-    </div>
+const DocumentCard: React.FC<{ doc: DocumentFile }> = ({ doc }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const getSignedUrl = async () => {
+    const bucket = doc.type === 'design' ? 'design-files' : 'execution-photos';
+    // Extract the file path from the full URL
+    const urlParts = doc.file_url.split(`${bucket}/`);
+    const filePath = urlParts[urlParts.length - 1];
     
-    <CardContent className="p-4">
-      <h3 className="font-medium text-foreground truncate mb-1">
-        {doc.file_name}
-      </h3>
-      <p className="text-sm text-muted-foreground mb-3">
-        Task: {doc.task_name}
-      </p>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Calendar className="w-3 h-3" />
-          {format(new Date(doc.uploaded_at), 'MMM d, yyyy')}
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(filePath, 3600); // 1 hour expiry
+    
+    if (error) {
+      console.error('Error creating signed URL:', error);
+      toast.error('Unable to access file');
+      return null;
+    }
+    return data.signedUrl;
+  };
+
+  const handleView = async () => {
+    setIsLoading(true);
+    const signedUrl = await getSignedUrl();
+    setIsLoading(false);
+    if (signedUrl) {
+      window.open(signedUrl, '_blank');
+    }
+  };
+
+  const handleDownload = async () => {
+    setIsLoading(true);
+    const signedUrl = await getSignedUrl();
+    setIsLoading(false);
+    if (signedUrl) {
+      const link = document.createElement('a');
+      link.href = signedUrl;
+      link.download = doc.file_name;
+      link.click();
+    }
+  };
+
+  return (
+    <Card className="glass-card overflow-hidden group hover:shadow-lg transition-shadow">
+      <div className="aspect-video bg-muted/50 relative overflow-hidden">
+        {isImageFile(doc.file_url) ? (
+          <img
+            src={doc.file_url}
+            alt={doc.file_name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        <div className={`absolute inset-0 flex items-center justify-center ${isImageFile(doc.file_url) ? 'hidden' : ''}`}>
+          <FileText className="w-12 h-12 text-muted-foreground" />
         </div>
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => window.open(doc.file_url, '_blank')}
-          >
-            <ExternalLink className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            asChild
-          >
-            <a href={doc.file_url} download={doc.file_name}>
-              <Download className="w-4 h-4" />
-            </a>
-          </Button>
-        </div>
+        <Badge className="absolute top-2 right-2 bg-accent text-accent-foreground">
+          <CheckCircle2 className="w-3 h-3 mr-1" />
+          Approved
+        </Badge>
       </div>
-    </CardContent>
-  </Card>
-);
+      
+      <CardContent className="p-4">
+        <h3 className="font-medium text-foreground truncate mb-1">
+          {doc.file_name}
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          Task: {doc.task_name}
+        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Calendar className="w-3 h-3" />
+            {format(new Date(doc.uploaded_at), 'MMM d, yyyy')}
+          </div>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleView}
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleDownload}
+              disabled={isLoading}
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const SubFolder: React.FC<{
   title: string;
