@@ -250,7 +250,7 @@ const ProjectDetail: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-lg font-display flex items-center gap-2">
                 <Palette className="w-5 h-5 text-accent" />
-                Design Tasks ({designCompleted}/15)
+                Design Tasks ({designCompleted}/{designTasks.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -310,7 +310,7 @@ const ProjectDetail: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-lg font-display flex items-center gap-2">
                 <HardHat className="w-5 h-5 text-accent" />
-                Execution Tasks ({executionCompleted}/15)
+                Execution Tasks ({executionCompleted}/{executionTasks.length})
               </CardTitle>
             </CardHeader>
             <CardContent>

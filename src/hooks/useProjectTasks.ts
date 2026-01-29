@@ -23,9 +23,9 @@ const updateProjectProgress = async (projectId: string) => {
     .eq('project_id', projectId)
     .eq('status', 'completed');
 
-  // Calculate progress: (completed / 30) * 100
+  // Calculate progress: (completed / 71) * 100 (36 design + 35 execution tasks)
   const totalCompleted = (designCompleted || 0) + (executionCompleted || 0);
-  const progress = Math.round((totalCompleted / 30) * 100);
+  const progress = Math.round((totalCompleted / 71) * 100);
 
   // Update project progress
   await supabase
