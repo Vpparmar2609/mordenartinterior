@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { roleLabels } from '@/types/auth';
 import { 
   Crown, 
   Palette, 
   PenTool, 
-  HardHat, 
   Users, 
   ClipboardCheck, 
   User,
@@ -18,24 +18,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const roleLabels: Record<UserRole, string> = {
-  admin: 'Admin',
-  design_head: 'Design Head',
-  designer: 'Designer',
-  execution_head: 'Execution Head',
-  execution_manager: 'Execution Manager',
-  site_supervisor: 'Site Supervisor',
-  client: 'Client',
-};
-
 const roleIcons: Record<UserRole, React.ReactNode> = {
   admin: <Crown className="w-5 h-5" />,
   design_head: <Palette className="w-5 h-5" />,
   designer: <PenTool className="w-5 h-5" />,
-  execution_head: <HardHat className="w-5 h-5" />,
   execution_manager: <Users className="w-5 h-5" />,
   site_supervisor: <ClipboardCheck className="w-5 h-5" />,
-  client: <User className="w-5 h-5" />,
 };
 
 const AuthPage: React.FC = () => {

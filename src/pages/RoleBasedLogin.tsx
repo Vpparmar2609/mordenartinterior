@@ -16,16 +16,13 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 const allRoles: UserRole[] = [
   'admin',
   'design_head',
   'designer',
-  'execution_head',
   'execution_manager',
-  'site_supervisor',
-  'client'
+  'site_supervisor'
 ];
 
 type LoginStep = 'role-select' | 'credentials';

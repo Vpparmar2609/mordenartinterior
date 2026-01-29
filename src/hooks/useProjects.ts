@@ -11,7 +11,7 @@ type ProjectStatus = Database['public']['Enums']['project_status'];
 
 export interface ProjectWithDetails extends Project {
   design_head_profile?: { id: string; name: string; email: string } | null;
-  execution_head_profile?: { id: string; name: string; email: string } | null;
+  execution_manager_profile?: { id: string; name: string; email: string } | null;
 }
 
 export const useProjects = () => {
@@ -30,11 +30,11 @@ export const useProjects = () => {
 
       if (error) throw error;
       
-      // Then get profiles for design_head_id and execution_head_id
+      // Then get profiles for design_head_id and execution_manager_id
       const headIds = [
         ...new Set([
           ...projects.filter(p => p.design_head_id).map(p => p.design_head_id),
-          ...projects.filter(p => p.execution_head_id).map(p => p.execution_head_id),
+          ...projects.filter(p => p.execution_manager_id).map(p => p.execution_manager_id),
         ].filter(Boolean) as string[])
       ];
 
@@ -56,7 +56,7 @@ export const useProjects = () => {
       return projects.map(p => ({
         ...p,
         design_head_profile: p.design_head_id ? profiles[p.design_head_id] : null,
-        execution_head_profile: p.execution_head_id ? profiles[p.execution_head_id] : null,
+        execution_manager_profile: p.execution_manager_id ? profiles[p.execution_manager_id] : null,
       })) as ProjectWithDetails[];
     },
     enabled: !!user,

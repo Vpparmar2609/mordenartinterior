@@ -23,7 +23,7 @@ export const useWorkload = (roles?: AppRole[]) => {
       // Also get direct assignments from projects table
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
-        .select('id, design_head_id, execution_head_id')
+        .select('id, design_head_id, execution_manager_id')
         .not('status', 'eq', 'completed');
 
       if (projectError) throw projectError;
@@ -45,9 +45,9 @@ export const useWorkload = (roles?: AppRole[]) => {
           const currentCount = workloadMap.get(project.design_head_id) || 0;
           workloadMap.set(project.design_head_id, currentCount + 1);
         }
-        if (project.execution_head_id) {
-          const currentCount = workloadMap.get(project.execution_head_id) || 0;
-          workloadMap.set(project.execution_head_id, currentCount + 1);
+        if (project.execution_manager_id) {
+          const currentCount = workloadMap.get(project.execution_manager_id) || 0;
+          workloadMap.set(project.execution_manager_id, currentCount + 1);
         }
       });
 

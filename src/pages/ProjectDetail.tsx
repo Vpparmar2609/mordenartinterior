@@ -92,7 +92,6 @@ const ProjectDetail: React.FC = () => {
   const colors = statusColors[status];
 
   const isAdmin = role === 'admin';
-  const isClient = role === 'client';
   const lifecycleStatus = (project as any).lifecycle_status || 'active';
   const isStopped = lifecycleStatus === 'stopped';
 
@@ -238,9 +237,9 @@ const ProjectDetail: React.FC = () => {
             <TeamAssignmentSection
               projectId={project.id}
               designHeadId={project.design_head_id}
-              executionHeadId={project.execution_head_id}
+              executionManagerId={project.execution_manager_id}
               designHeadProfile={project.design_head_profile}
-              executionHeadProfile={project.execution_head_profile}
+              executionManagerProfile={project.execution_manager_profile}
             />
           </div>
         </TabsContent>
@@ -371,7 +370,7 @@ const ProjectDetail: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="chat" className="mt-6">
-          <ProjectChat projectId={project.id} isClient={isClient} />
+          <ProjectChat projectId={project.id} isClient={false} />
         </TabsContent>
       </Tabs>
     </div>

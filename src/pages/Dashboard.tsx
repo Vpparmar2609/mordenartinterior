@@ -2,14 +2,8 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { roleLabels } from '@/types/auth';
 
-// Role-specific dashboard imports
+// Unified dashboard for all roles
 import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
-import { DesignHeadDashboard } from '@/components/dashboards/DesignHeadDashboard';
-import { DesignerDashboard } from '@/components/dashboards/DesignerDashboard';
-import { ExecutionHeadDashboard } from '@/components/dashboards/ExecutionHeadDashboard';
-import { ExecutionManagerDashboard } from '@/components/dashboards/ExecutionManagerDashboard';
-import { SiteSupervisorDashboard } from '@/components/dashboards/SiteSupervisorDashboard';
-import { ClientDashboard } from '@/components/dashboards/ClientDashboard';
 
 const Dashboard: React.FC = () => {
   const { profile, role, isLoading } = useAuth();
@@ -29,37 +23,25 @@ const Dashboard: React.FC = () => {
     return 'Good evening';
   };
 
-  // Render role-specific dashboard
+  // All roles get the same unified dashboard (admin-style)
   const renderDashboard = () => {
-    switch (role) {
-      case 'admin':
-        return <AdminDashboard />;
-      case 'design_head':
-        return <DesignHeadDashboard />;
-      case 'designer':
-        return <DesignerDashboard />;
-      case 'execution_head':
-        return <ExecutionHeadDashboard />;
-      case 'execution_manager':
-        return <ExecutionManagerDashboard />;
-      case 'site_supervisor':
-        return <SiteSupervisorDashboard />;
-      case 'client':
-        return <ClientDashboard />;
-      default:
-        return (
-          <div className="text-center py-12 glass-card rounded-xl">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-warning/10 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-display mb-2">Welcome to Modern Art Interior</h2>
-            <p className="text-muted-foreground mb-4">Your role has not been assigned yet.</p>
-            <p className="text-sm text-muted-foreground">Please contact an administrator to assign your role, or wait for approval.</p>
+    if (!role) {
+      return (
+        <div className="text-center py-12 glass-card rounded-xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-warning/10 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
           </div>
-        );
+          <h2 className="text-xl font-display mb-2">Welcome to Modern Art Interior</h2>
+          <p className="text-muted-foreground mb-4">Your role has not been assigned yet.</p>
+          <p className="text-sm text-muted-foreground">Please contact an administrator to assign your role, or wait for approval.</p>
+        </div>
+      );
     }
+    
+    // All roles use the unified AdminDashboard
+    return <AdminDashboard />;
   };
 
   return (

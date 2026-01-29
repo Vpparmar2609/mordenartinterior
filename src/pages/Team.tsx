@@ -15,10 +15,8 @@ import {
   Crown,
   Palette,
   PenTool,
-  HardHat,
   Users,
   ClipboardCheck,
-  User,
   Shield,
   AlertCircle,
   Plus,
@@ -49,20 +47,16 @@ const roleIcons: Record<UserRole, React.ReactNode> = {
   admin: <Crown className="w-4 h-4" />,
   design_head: <Palette className="w-4 h-4" />,
   designer: <PenTool className="w-4 h-4" />,
-  execution_head: <HardHat className="w-4 h-4" />,
   execution_manager: <Users className="w-4 h-4" />,
   site_supervisor: <ClipboardCheck className="w-4 h-4" />,
-  client: <User className="w-4 h-4" />,
 };
 
 const allRoles: UserRole[] = [
   'admin',
   'design_head',
   'designer',
-  'execution_head',
   'execution_manager',
   'site_supervisor',
-  'client'
 ];
 
 const Team: React.FC = () => {
@@ -110,7 +104,7 @@ const Team: React.FC = () => {
     }
   };
 
-  const roles: (UserRole | 'all')[] = ['all', ...allRoles.filter(r => r !== 'client')];
+  const roles: (UserRole | 'all')[] = ['all', ...allRoles];
 
   if (isLoading) {
     return (

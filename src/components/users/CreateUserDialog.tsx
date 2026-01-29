@@ -50,10 +50,8 @@ const allRoles: UserRole[] = [
   'admin',
   'design_head',
   'designer',
-  'execution_head',
   'execution_manager',
   'site_supervisor',
-  'client',
 ];
 
 export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
@@ -147,7 +145,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
           <DialogDescription>
             {createdCredentials
               ? 'Share these credentials with the user.'
-              : 'Add a new team member or client account.'}
+              : 'Add a new team member account.'}
           </DialogDescription>
         </DialogHeader>
 

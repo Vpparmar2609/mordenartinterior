@@ -40,8 +40,7 @@ const projectSchema = z.object({
   start_date: z.string().min(1, 'Start date is required'),
   deadline: z.string().min(1, 'Deadline is required'),
   design_head_id: z.string().optional(),
-  execution_head_id: z.string().optional(),
-  client_user_id: z.string().optional(),
+  execution_manager_id: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -59,8 +58,7 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
   const { getUsersByRole } = useUsers();
   
   const designHeads = getUsersByRole('design_head');
-  const executionHeads = getUsersByRole('execution_head');
-  const clients = getUsersByRole('client');
+  const executionManagers = getUsersByRole('execution_manager');
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -75,8 +73,7 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       start_date: new Date().toISOString().split('T')[0],
       deadline: '',
       design_head_id: undefined,
-      execution_head_id: undefined,
-      client_user_id: undefined,
+      execution_manager_id: undefined,
     },
   });
 
@@ -92,8 +89,7 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       start_date: data.start_date,
       deadline: data.deadline,
       design_head_id: data.design_head_id || null,
-      execution_head_id: data.execution_head_id || null,
-      client_user_id: data.client_user_id || null,
+      execution_manager_id: data.execution_manager_id || null,
     });
     form.reset();
     onOpenChange(false);
@@ -298,63 +294,32 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
                 />
                 <FormField
                   control={form.control}
-                  name="execution_head_id"
+                  name="execution_manager_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Execution Head</FormLabel>
+                      <FormLabel>Execution Manager</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select Execution Head" />
+                            <SelectValue placeholder="Select Execution Manager" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {executionHeads.length === 0 ? (
-                            <SelectItem value="none" disabled>No execution heads available</SelectItem>
+                          {executionManagers.length === 0 ? (
+                            <SelectItem value="none" disabled>No execution managers available</SelectItem>
                           ) : (
-                            executionHeads.map((user) => (
+                            executionManagers.map((user) => (
                               <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                             ))
                           )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-          </div>
-
-          {/* Client User Assignment */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground">Client Portal Access (Optional)</h3>
-            <FormField
-              control={form.control}
-              name="client_user_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Link to Client User</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Client User Account" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {clients.length === 0 ? (
-                        <SelectItem value="none" disabled>No client users available</SelectItem>
-                      ) : (
-                        clients.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>{user.name} ({user.email})</SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

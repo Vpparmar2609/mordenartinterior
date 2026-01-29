@@ -39,7 +39,7 @@ export const FileApprovalSection: React.FC<FileApprovalSectionProps> = ({
   type,
   projectId,
 }) => {
-  const { isAdmin, isDesignHead, isExecutionHead, isExecutionManager } = useUserRole();
+  const { isAdmin, isDesignHead, isExecutionManager } = useUserRole();
   const [selectedFile, setSelectedFile] = useState<PendingFile | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -52,7 +52,7 @@ export const FileApprovalSection: React.FC<FileApprovalSectionProps> = ({
 
   const canApprove = type === 'design' 
     ? (isAdmin || isDesignHead)
-    : (isAdmin || isExecutionHead || isExecutionManager);
+    : (isAdmin || isExecutionManager);
 
   const files = type === 'design' ? designFiles : executionPhotos;
   const isLoading = type === 'design' ? designLoading : executionLoading;

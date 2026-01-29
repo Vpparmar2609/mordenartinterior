@@ -30,9 +30,8 @@ import { roleLabels } from '@/types/auth';
 import type { Database } from '@/integrations/supabase/types';
 import { 
   Palette, 
-  HardHat, 
-  PenTool, 
   Users, 
+  PenTool, 
   ClipboardCheck,
   UserPlus,
   X,
@@ -40,22 +39,20 @@ import {
   Briefcase,
   Edit2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
 interface TeamAssignmentSectionProps {
   projectId: string;
   designHeadId: string | null;
-  executionHeadId: string | null;
+  executionManagerId: string | null;
   designHeadProfile?: { id: string; name: string; email: string } | null;
-  executionHeadProfile?: { id: string; name: string; email: string } | null;
+  executionManagerProfile?: { id: string; name: string; email: string } | null;
 }
 
 const roleIcons: Record<string, React.ReactNode> = {
   design_head: <Palette className="w-4 h-4" />,
   designer: <PenTool className="w-4 h-4" />,
-  execution_head: <HardHat className="w-4 h-4" />,
   execution_manager: <Users className="w-4 h-4" />,
   site_supervisor: <ClipboardCheck className="w-4 h-4" />,
 };
@@ -63,9 +60,9 @@ const roleIcons: Record<string, React.ReactNode> = {
 export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
   projectId,
   designHeadId,
-  executionHeadId,
+  executionManagerId,
   designHeadProfile,
-  executionHeadProfile,
+  executionManagerProfile,
 }) => {
   const { role: currentUserRole, user } = useAuth();
   const { users } = useUsers();
@@ -78,7 +75,6 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
 
   const isAdmin = currentUserRole === 'admin';
   const isDesignHead = currentUserRole === 'design_head';
-  const isExecutionHead = currentUserRole === 'execution_head';
   const isExecutionManager = currentUserRole === 'execution_manager';
 
   // Get users by role for selection
@@ -86,8 +82,8 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
     return users.filter(u => u.role === role);
   };
 
-  // Handle head assignment (design_head or execution_head on projects table)
-  const handleHeadAssignment = async (headType: 'design_head_id' | 'execution_head_id', userId: string | null) => {
+  // Handle head assignment (design_head_id or execution_manager_id on projects table)
+  const handleHeadAssignment = async (headType: 'design_head_id' | 'execution_manager_id', userId: string | null) => {
     await updateProject.mutateAsync({
       id: projectId,
       [headType]: userId,
@@ -96,7 +92,7 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
     setSelectedUserId('');
   };
 
-  // Handle team member assignment (designer, execution_manager, site_supervisor on project_team table)
+  // Handle team member assignment (designer, site_supervisor on project_team table)
   const handleTeamAssignment = async (role: AppRole) => {
     if (!selectedUserId) return;
     await assignMember.mutateAsync({ userId: selectedUserId, role });
@@ -124,7 +120,7 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
     icon: React.ReactNode,
     headId: string | null,
     headProfile: { id: string; name: string; email: string } | null | undefined,
-    headType: 'design_head_id' | 'execution_head_id',
+    headType: 'design_head_id' | 'execution_manager_id',
     availableRole: AppRole,
     canEdit: boolean
   ) => {
@@ -361,33 +357,24 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
           isAdmin || isDesignHead
         )}
 
-        {/* Execution Head - Only admin can change */}
+        {/* Execution Manager - Only admin can change */}
         {renderHeadRow(
-          'Execution Head',
-          <HardHat className="w-4 h-4" />,
-          executionHeadId,
-          executionHeadProfile,
-          'execution_head_id',
-          'execution_head',
+          'Execution Manager',
+          <Users className="w-4 h-4" />,
+          executionManagerId,
+          executionManagerProfile,
+          'execution_manager_id',
+          'execution_manager',
           isAdmin
         )}
 
-        {/* Execution Manager - Execution Head or Admin can assign */}
-        {renderTeamMemberRow(
-          'Execution Manager',
-          <Users className="w-4 h-4" />,
-          'execution_manager',
-          isAdmin || isExecutionHead,
-          isAdmin || isExecutionHead
-        )}
-
-        {/* Site Supervisor - Execution Head, Manager or Admin can assign */}
+        {/* Site Supervisor - Execution Manager or Admin can assign */}
         {renderTeamMemberRow(
           'Site Supervisor',
           <ClipboardCheck className="w-4 h-4" />,
           'site_supervisor',
-          isAdmin || isExecutionHead || isExecutionManager,
-          isAdmin || isExecutionHead || isExecutionManager
+          isAdmin || isExecutionManager,
+          isAdmin || isExecutionManager
         )}
       </CardContent>
     </Card>
