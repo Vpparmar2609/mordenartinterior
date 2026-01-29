@@ -1,7 +1,5 @@
-import LoginPage from './LoginPage';
+import LoginPage from "./LoginPage";
 
-const Index = () => {
-  return <LoginPage />;
-};
+const Index = () => {};
 
 export default Index;
