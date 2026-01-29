@@ -27,10 +27,10 @@ const ExecutionTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
   const { user, role } = useAuth();
-  const { isAdmin, isExecutionHead, isExecutionManager } = useUserRole();
+  const { isAdmin, isExecutionManager } = useUserRole();
   const { projects, isLoading: projectsLoading } = useProjects();
   const { tasks: allTasks, isLoading: tasksLoading, updateTask } = useAllExecutionTasks();
-  const canApproveFiles = isAdmin || isExecutionHead || isExecutionManager;
+  const canApproveFiles = isAdmin || isExecutionManager;
 
   // Group tasks by project
   const projectsWithTasks = useMemo(() => {

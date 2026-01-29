@@ -22,10 +22,8 @@ import {
   Crown, 
   Palette, 
   PenTool, 
-  HardHat, 
   Users, 
   ClipboardCheck, 
-  User,
   Loader2,
   Shield
 } from 'lucide-react';
@@ -34,20 +32,16 @@ const roleIcons: Record<UserRole, React.ReactNode> = {
   admin: <Crown className="w-4 h-4" />,
   design_head: <Palette className="w-4 h-4" />,
   designer: <PenTool className="w-4 h-4" />,
-  execution_head: <HardHat className="w-4 h-4" />,
   execution_manager: <Users className="w-4 h-4" />,
   site_supervisor: <ClipboardCheck className="w-4 h-4" />,
-  client: <User className="w-4 h-4" />,
 };
 
 const roleColors: Record<UserRole, string> = {
   admin: 'bg-primary/20 text-primary',
   design_head: 'bg-accent/20 text-accent',
   designer: 'bg-blue-500/20 text-blue-500',
-  execution_head: 'bg-orange-500/20 text-orange-500',
   execution_manager: 'bg-green-500/20 text-green-500',
   site_supervisor: 'bg-yellow-500/20 text-yellow-500',
-  client: 'bg-muted text-muted-foreground',
 };
 
 interface UserManagementDialogProps {
@@ -70,7 +64,7 @@ export const UserManagementDialog: React.FC<UserManagementDialogProps> = ({
     setSelectedRole(null);
   };
 
-  const roles: UserRole[] = ['admin', 'design_head', 'designer', 'execution_head', 'execution_manager', 'site_supervisor', 'client'];
+  const roles: UserRole[] = ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor'];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

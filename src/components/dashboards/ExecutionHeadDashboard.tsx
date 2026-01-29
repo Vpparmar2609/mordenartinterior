@@ -52,7 +52,7 @@ export const ExecutionHeadDashboard: React.FC = () => {
   const [isAssigning, setIsAssigning] = useState(false);
 
   // Filter projects assigned to this execution head
-  const myProjects = projects.filter(p => p.execution_head_id === user?.id);
+  const myProjects = projects.filter(p => p.execution_manager_id === user?.id);
   const executionProjects = myProjects.filter(p => 
     ['execution_started', 'work_in_progress', 'finishing', 'handover_pending', 'snag_fix'].includes(p.status)
   );

@@ -8,6 +8,7 @@ import { useIssues } from '@/hooks/useIssues';
 import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
 import { UserManagementDialog } from '@/components/users/UserManagementDialog';
 import { ProjectList } from '@/components/projects/ProjectList';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   FolderKanban, 
   Users, 
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
+  const { role } = useAuth();
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const { stats, isLoading: statsLoading } = useProjectStats();
@@ -29,6 +31,7 @@ export const AdminDashboard: React.FC = () => {
   const { users, isLoading: usersLoading } = useUsers();
   const { issues, isLoading: issuesLoading } = useIssues();
 
+  const isAdmin = role === 'admin';
   const openIssues = issues.filter(i => i.status === 'open').length;
 
   const statCards = [
@@ -78,17 +81,19 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-3">
-        <Button onClick={() => setShowCreateProject(true)} variant="hero" size="lg">
-          <Plus className="w-5 h-5 mr-2" />
-          New Project
-        </Button>
-        <Button onClick={() => setShowUserManagement(true)} variant="outline" size="lg">
-          <UserPlus className="w-5 h-5 mr-2" />
-          Manage Users
-        </Button>
-      </div>
+      {/* Quick Actions - Only for Admin */}
+      {isAdmin && (
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={() => setShowCreateProject(true)} variant="hero" size="lg">
+            <Plus className="w-5 h-5 mr-2" />
+            New Project
+          </Button>
+          <Button onClick={() => setShowUserManagement(true)} variant="outline" size="lg">
+            <UserPlus className="w-5 h-5 mr-2" />
+            Manage Users
+          </Button>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -109,9 +114,11 @@ export const AdminDashboard: React.FC = () => {
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-display">Recent Projects</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setShowCreateProject(true)}>
-              <Plus className="w-4 h-4" />
-            </Button>
+            {isAdmin && (
+              <Button variant="ghost" size="sm" onClick={() => setShowCreateProject(true)}>
+                <Plus className="w-4 h-4" />
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             {projectsLoading ? (
@@ -120,9 +127,11 @@ export const AdminDashboard: React.FC = () => {
               <div className="text-center py-8">
                 <FolderKanban className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
                 <p className="text-muted-foreground text-sm">No projects yet</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowCreateProject(true)}>
-                  Create First Project
-                </Button>
+                {isAdmin && (
+                  <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowCreateProject(true)}>
+                    Create First Project
+                  </Button>
+                )}
               </div>
             ) : (
               <ProjectList projects={projects.slice(0, 5)} compact />
@@ -141,13 +150,15 @@ export const AdminDashboard: React.FC = () => {
               <div className="text-center py-8">
                 <Users className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
                 <p className="text-muted-foreground text-sm">No team members</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowUserManagement(true)}>
-                  Invite Team
-                </Button>
+                {isAdmin && (
+                  <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowUserManagement(true)}>
+                    Invite Team
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
-                {['admin', 'design_head', 'designer', 'execution_head', 'execution_manager', 'site_supervisor', 'client'].map(role => {
+                {['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor'].map(role => {
                   const count = users.filter(u => u.role === role).length;
                   if (count === 0) return null;
                   return (

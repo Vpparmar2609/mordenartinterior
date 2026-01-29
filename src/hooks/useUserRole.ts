@@ -14,21 +14,19 @@ export const useUserRole = () => {
   const isAdmin = hasRole('admin');
   const isDesignHead = hasRole('design_head');
   const isDesigner = hasRole('designer');
-  const isExecutionHead = hasRole('execution_head');
   const isExecutionManager = hasRole('execution_manager');
   const isSiteSupervisor = hasRole('site_supervisor');
-  const isClient = hasRole('client');
 
   const canManageDesign = hasAnyRole(['admin', 'design_head']);
-  const canManageExecution = hasAnyRole(['admin', 'execution_head']);
+  const canManageExecution = hasAnyRole(['admin', 'execution_manager']);
   const canCreateProjects = isAdmin;
-  const canAssignTeam = hasAnyRole(['admin', 'design_head', 'execution_head']);
+  const canAssignTeam = hasAnyRole(['admin', 'design_head', 'execution_manager']);
   const canViewAllProjects = isAdmin;
   const canApproveDesigns = hasAnyRole(['admin', 'design_head']);
+  const canApproveExecution = hasAnyRole(['admin', 'execution_manager']);
   const canUploadDesigns = hasAnyRole(['admin', 'design_head', 'designer']);
-  const canSubmitDailyReports = hasAnyRole(['admin', 'execution_head', 'execution_manager', 'site_supervisor']);
-  const canReportIssues = hasAnyRole(['admin', 'execution_head', 'execution_manager', 'site_supervisor']);
-  const canProvideFeedback = hasAnyRole(['admin', 'client']);
+  const canSubmitDailyReports = hasAnyRole(['admin', 'execution_manager', 'site_supervisor']);
+  const canReportIssues = hasAnyRole(['admin', 'execution_manager', 'site_supervisor']);
 
   return {
     role,
@@ -38,19 +36,17 @@ export const useUserRole = () => {
     isAdmin,
     isDesignHead,
     isDesigner,
-    isExecutionHead,
     isExecutionManager,
     isSiteSupervisor,
-    isClient,
     canManageDesign,
     canManageExecution,
     canCreateProjects,
     canAssignTeam,
     canViewAllProjects,
     canApproveDesigns,
+    canApproveExecution,
     canUploadDesigns,
     canSubmitDailyReports,
     canReportIssues,
-    canProvideFeedback,
   };
 };

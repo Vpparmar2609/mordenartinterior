@@ -5,10 +5,8 @@ import {
   Crown, 
   Palette, 
   PenTool, 
-  HardHat, 
   Users, 
   ClipboardCheck, 
-  User,
   LucideIcon
 } from 'lucide-react';
 
@@ -42,15 +40,9 @@ const roleConfig: Record<UserRole, {
     gradient: 'from-pink-500/20 to-rose-500/20',
     accent: 'border-pink-500/50 bg-pink-500/10',
   },
-  execution_head: {
-    icon: HardHat,
-    description: 'Oversee all execution activities',
-    gradient: 'from-green-500/20 to-emerald-500/20',
-    accent: 'border-green-500/50 bg-green-500/10',
-  },
   execution_manager: {
     icon: Users,
-    description: 'Manage site teams & progress',
+    description: 'Manage site teams, progress & approvals',
     gradient: 'from-blue-500/20 to-cyan-500/20',
     accent: 'border-blue-500/50 bg-blue-500/10',
   },
@@ -59,12 +51,6 @@ const roleConfig: Record<UserRole, {
     description: 'Daily reports & site updates',
     gradient: 'from-teal-500/20 to-green-500/20',
     accent: 'border-teal-500/50 bg-teal-500/10',
-  },
-  client: {
-    icon: User,
-    description: 'View project progress & approvals',
-    gradient: 'from-slate-500/20 to-gray-500/20',
-    accent: 'border-slate-500/50 bg-slate-500/10',
   },
 };
 
