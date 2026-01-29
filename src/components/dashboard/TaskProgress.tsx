@@ -1,21 +1,71 @@
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
-
-interface TaskCategory {
-  name: string;
-  completed: number;
-  total: number;
-  color: string;
-}
-
-const mockTasks: TaskCategory[] = [
-  { name: 'Design Tasks', completed: 42, total: 60, color: 'bg-primary' },
-  { name: 'Execution Tasks', completed: 28, total: 45, color: 'bg-accent' },
-  { name: 'Pending Approvals', completed: 8, total: 12, color: 'bg-warning' },
-  { name: 'Issues to Resolve', completed: 5, total: 7, color: 'bg-destructive' },
-];
+import { useAllDesignTasks, useAllExecutionTasks } from '@/hooks/useProjectTasks';
+import { useApprovals } from '@/hooks/useApprovals';
+import { useIssues } from '@/hooks/useIssues';
+import { Loader2 } from 'lucide-react';
 
 export const TaskProgress: React.FC = () => {
+  const { tasks: designTasks, isLoading: designLoading } = useAllDesignTasks();
+  const { tasks: executionTasks, isLoading: executionLoading } = useAllExecutionTasks();
+  const { approvals, isLoading: approvalsLoading } = useApprovals();
+  const { issues, isLoading: issuesLoading } = useIssues();
+
+  const isLoading = designLoading || executionLoading || approvalsLoading || issuesLoading;
+
+  if (isLoading) {
+    return (
+      <div className="glass-card rounded-2xl p-6 animate-fade-in">
+        <h3 className="font-display text-lg font-semibold text-foreground mb-6">
+          Task Overview
+        </h3>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  const designCompleted = designTasks.filter(t => t.status === 'completed').length;
+  const designTotal = designTasks.length || 1;
+  
+  const executionCompleted = executionTasks.filter(t => t.status === 'completed').length;
+  const executionTotal = executionTasks.length || 1;
+  
+  const pendingApprovals = approvals?.filter(a => a.status === 'pending') || [];
+  const respondedApprovals = approvals?.filter(a => a.status !== 'pending') || [];
+  const approvalsTotal = approvals?.length || 1;
+  
+  const resolvedIssues = issues?.filter(i => i.status === 'resolved') || [];
+  const issuesTotal = issues?.length || 1;
+
+  const taskCategories = [
+    { 
+      name: 'Design Tasks', 
+      completed: designCompleted, 
+      total: designTotal, 
+      color: 'bg-primary' 
+    },
+    { 
+      name: 'Execution Tasks', 
+      completed: executionCompleted, 
+      total: executionTotal, 
+      color: 'bg-accent' 
+    },
+    { 
+      name: 'Pending Approvals', 
+      completed: respondedApprovals.length, 
+      total: approvalsTotal, 
+      color: 'bg-warning' 
+    },
+    { 
+      name: 'Issues to Resolve', 
+      completed: resolvedIssues.length, 
+      total: issuesTotal, 
+      color: 'bg-destructive' 
+    },
+  ];
+
   return (
     <div className="glass-card rounded-2xl p-6 animate-fade-in">
       <h3 className="font-display text-lg font-semibold text-foreground mb-6">
@@ -23,8 +73,8 @@ export const TaskProgress: React.FC = () => {
       </h3>
       
       <div className="space-y-6">
-        {mockTasks.map((task) => {
-          const percentage = Math.round((task.completed / task.total) * 100);
+        {taskCategories.map((task) => {
+          const percentage = task.total > 0 ? Math.round((task.completed / task.total) * 100) : 0;
           
           return (
             <div key={task.name} className="space-y-2">
