@@ -4,61 +4,20 @@ import {
   Upload, 
   MessageSquare, 
   AlertTriangle,
-  Clock
+  Clock,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNotifications } from '@/hooks/useNotifications';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Activity {
   id: string;
   type: 'completed' | 'uploaded' | 'message' | 'issue' | 'update';
   title: string;
-  project: string;
-  user: string;
+  message: string;
   time: string;
 }
-
-const mockActivities: Activity[] = [
-  {
-    id: '1',
-    type: 'completed',
-    title: 'Kitchen 3D design completed',
-    project: 'Sharma Residence',
-    user: 'Rahul Patel',
-    time: '5 min ago',
-  },
-  {
-    id: '2',
-    type: 'uploaded',
-    title: 'Site photos uploaded',
-    project: 'Gupta Villa',
-    user: 'Rajesh Verma',
-    time: '15 min ago',
-  },
-  {
-    id: '3',
-    type: 'issue',
-    title: 'Material delay reported',
-    project: 'Kumar Apartment',
-    user: 'Amit Kumar',
-    time: '1 hour ago',
-  },
-  {
-    id: '4',
-    type: 'message',
-    title: 'New message from client',
-    project: 'Patel House',
-    user: 'Client',
-    time: '2 hours ago',
-  },
-  {
-    id: '5',
-    type: 'update',
-    title: 'Project status updated',
-    project: 'Singh Residence',
-    user: 'Vikram Singh',
-    time: '3 hours ago',
-  },
-];
 
 const typeIcons: Record<Activity['type'], React.ReactNode> = {
   completed: <CheckCircle2 className="w-4 h-4" />,
@@ -76,36 +35,80 @@ const typeColors: Record<Activity['type'], string> = {
   update: 'bg-muted text-muted-foreground',
 };
 
+const mapNotificationType = (type: string): Activity['type'] => {
+  switch (type) {
+    case 'approval_responded':
+      return 'completed';
+    case 'approval_requested':
+      return 'uploaded';
+    case 'issue_raised':
+      return 'issue';
+    case 'project_assigned':
+      return 'update';
+    default:
+      return 'message';
+  }
+};
+
 export const RecentActivity: React.FC = () => {
+  const { notifications, isLoading } = useNotifications();
+
+  if (isLoading) {
+    return (
+      <div className="glass-card rounded-2xl p-6 animate-fade-in">
+        <h3 className="font-display text-lg font-semibold text-foreground mb-6">
+          Recent Activity
+        </h3>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  const activities: Activity[] = (notifications || []).slice(0, 5).map(notif => ({
+    id: notif.id,
+    type: mapNotificationType(notif.type),
+    title: notif.title,
+    message: notif.message,
+    time: formatDistanceToNow(new Date(notif.created_at), { addSuffix: true }),
+  }));
+
   return (
     <div className="glass-card rounded-2xl p-6 animate-fade-in">
       <h3 className="font-display text-lg font-semibold text-foreground mb-6">
         Recent Activity
       </h3>
       
-      <div className="space-y-4">
-        {mockActivities.map((activity) => (
-          <div key={activity.id} className="flex items-start gap-3">
-            <div className={cn(
-              'p-2 rounded-lg shrink-0',
-              typeColors[activity.type]
-            )}>
-              {typeIcons[activity.type]}
+      {activities.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-4">
+          No recent activity
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {activities.map((activity) => (
+            <div key={activity.id} className="flex items-start gap-3">
+              <div className={cn(
+                'p-2 rounded-lg shrink-0',
+                typeColors[activity.type]
+              )}>
+                {typeIcons[activity.type]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {activity.title}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {activity.message}
+                </p>
+              </div>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {activity.time}
+              </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {activity.title}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {activity.project} • {activity.user}
-              </p>
-            </div>
-            <span className="text-xs text-muted-foreground shrink-0">
-              {activity.time}
-            </span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
