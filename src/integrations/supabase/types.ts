@@ -727,6 +727,7 @@ export type Database = {
         | "execution_manager"
         | "site_supervisor"
         | "client"
+        | "account_manager"
       issue_severity: "low" | "medium" | "high"
       issue_status: "open" | "in_progress" | "resolved"
       project_status:
@@ -876,6 +877,7 @@ export const Constants = {
         "execution_manager",
         "site_supervisor",
         "client",
+        "account_manager",
       ],
       issue_severity: ["low", "medium", "high"],
       issue_status: ["open", "in_progress", "resolved"],
