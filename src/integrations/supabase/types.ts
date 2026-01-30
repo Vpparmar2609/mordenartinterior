@@ -360,6 +360,94 @@ export type Database = {
           },
         ]
       }
+      extra_work: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          paid_amount: number
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          paid_amount?: number
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          paid_amount?: number
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extra_work_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extra_work_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          extra_work_id: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string | null
+          recorded_by: string
+          reference_number: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          extra_work_id: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          recorded_by: string
+          reference_number?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          extra_work_id?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          recorded_by?: string
+          reference_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extra_work_payments_extra_work_id_fkey"
+            columns: ["extra_work_id"]
+            isOneToOne: false
+            referencedRelation: "extra_work"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       issues: {
         Row: {
           assigned_to: string | null
@@ -446,6 +534,104 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_stages: {
+        Row: {
+          created_at: string
+          id: string
+          paid_amount: number
+          percentage: number
+          project_id: string
+          required_amount: number
+          stage: Database["public"]["Enums"]["payment_stage"]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          paid_amount?: number
+          percentage: number
+          project_id: string
+          required_amount?: number
+          stage: Database["public"]["Enums"]["payment_stage"]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          paid_amount?: number
+          percentage?: number
+          project_id?: string
+          required_amount?: number
+          stage?: Database["public"]["Enums"]["payment_stage"]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string | null
+          project_id: string
+          recorded_by: string
+          reference_number: string | null
+          stage_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          project_id: string
+          recorded_by: string
+          reference_number?: string | null
+          stage_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          project_id?: string
+          recorded_by?: string
+          reference_number?: string | null
+          stage_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "payment_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -475,6 +661,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      project_costs: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          project_id: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          project_id: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          project_id?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_costs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_messages: {
         Row: {
@@ -730,6 +951,13 @@ export type Database = {
         | "account_manager"
       issue_severity: "low" | "medium" | "high"
       issue_status: "open" | "in_progress" | "resolved"
+      payment_stage:
+        | "booking"
+        | "pop_stage"
+        | "plywood_stage"
+        | "lamination_stage"
+        | "paint_stage"
+        | "fabric_stage"
       project_status:
         | "lead"
         | "design_in_progress"
@@ -881,6 +1109,14 @@ export const Constants = {
       ],
       issue_severity: ["low", "medium", "high"],
       issue_status: ["open", "in_progress", "resolved"],
+      payment_stage: [
+        "booking",
+        "pop_stage",
+        "plywood_stage",
+        "lamination_stage",
+        "paint_stage",
+        "fabric_stage",
+      ],
       project_status: [
         "lead",
         "design_in_progress",

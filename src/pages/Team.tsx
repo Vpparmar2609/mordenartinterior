@@ -17,6 +17,7 @@ import {
   PenTool,
   Users,
   ClipboardCheck,
+  Calculator,
   Shield,
   AlertCircle,
   Plus,
@@ -49,6 +50,7 @@ const roleIcons: Record<UserRole, React.ReactNode> = {
   designer: <PenTool className="w-4 h-4" />,
   execution_manager: <Users className="w-4 h-4" />,
   site_supervisor: <ClipboardCheck className="w-4 h-4" />,
+  account_manager: <Calculator className="w-4 h-4" />,
 };
 
 const allRoles: UserRole[] = [
@@ -57,6 +59,7 @@ const allRoles: UserRole[] = [
   'designer',
   'execution_manager',
   'site_supervisor',
+  'account_manager',
 ];
 
 const Team: React.FC = () => {

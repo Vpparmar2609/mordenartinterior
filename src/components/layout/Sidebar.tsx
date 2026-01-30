@@ -20,6 +20,7 @@ import {
   BarChart3,
   Building2,
   Bell,
+  IndianRupee,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +36,7 @@ const navItems: NavItem[] = [
     icon: <LayoutDashboard className="w-5 h-5" />,
     label: 'Dashboard',
     href: '/dashboard',
-    roles: ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor'],
+    roles: ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor', 'account_manager'],
   },
   {
     icon: <FolderKanban className="w-5 h-5" />,
@@ -80,6 +81,12 @@ const navItems: NavItem[] = [
     roles: ['admin', 'design_head', 'execution_manager'],
   },
   {
+    icon: <IndianRupee className="w-5 h-5" />,
+    label: 'Accounts',
+    href: '/accounts',
+    roles: ['admin', 'account_manager'],
+  },
+  {
     icon: <MessageSquare className="w-5 h-5" />,
     label: 'Messages',
     href: '/messages',
@@ -95,7 +102,7 @@ const navItems: NavItem[] = [
     icon: <Bell className="w-5 h-5" />,
     label: 'Notifications',
     href: '/notifications',
-    roles: ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor'],
+    roles: ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor', 'account_manager'],
   },
   {
     icon: <BarChart3 className="w-5 h-5" />,

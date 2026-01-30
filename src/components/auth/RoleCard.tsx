@@ -6,7 +6,8 @@ import {
   Palette, 
   PenTool, 
   Users, 
-  ClipboardCheck, 
+  ClipboardCheck,
+  Calculator,
   LucideIcon
 } from 'lucide-react';
 
@@ -51,6 +52,12 @@ const roleConfig: Record<UserRole, {
     description: 'Daily reports & site updates',
     gradient: 'from-teal-500/20 to-green-500/20',
     accent: 'border-teal-500/50 bg-teal-500/10',
+  },
+  account_manager: {
+    icon: Calculator,
+    description: 'Track payments & financials',
+    gradient: 'from-emerald-500/20 to-green-500/20',
+    accent: 'border-emerald-500/50 bg-emerald-500/10',
   },
 };
 

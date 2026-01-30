@@ -2,8 +2,10 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { roleLabels } from '@/types/auth';
 
-// Unified dashboard for all roles
+// Unified dashboard for most roles
 import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
+// Specialized dashboard for accountant
+import { AccountantDashboard } from '@/components/dashboards/AccountantDashboard';
 
 const Dashboard: React.FC = () => {
   const { profile, role, isLoading } = useAuth();
@@ -23,7 +25,6 @@ const Dashboard: React.FC = () => {
     return 'Good evening';
   };
 
-  // All roles get the same unified dashboard (admin-style)
   const renderDashboard = () => {
     if (!role) {
       return (
@@ -40,7 +41,12 @@ const Dashboard: React.FC = () => {
       );
     }
     
-    // All roles use the unified AdminDashboard
+    // Account Manager gets specialized financial dashboard
+    if (role === 'account_manager') {
+      return <AccountantDashboard />;
+    }
+    
+    // All other roles use the unified AdminDashboard
     return <AdminDashboard />;
   };
 

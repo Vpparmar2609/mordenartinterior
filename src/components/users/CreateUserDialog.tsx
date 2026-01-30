@@ -52,6 +52,7 @@ const allRoles: UserRole[] = [
   'designer',
   'execution_manager',
   'site_supervisor',
+  'account_manager',
 ];
 
 export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({

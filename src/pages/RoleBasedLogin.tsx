@@ -22,7 +22,8 @@ const allRoles: UserRole[] = [
   'design_head',
   'designer',
   'execution_manager',
-  'site_supervisor'
+  'site_supervisor',
+  'account_manager'
 ];
 
 type LoginStep = 'role-select' | 'credentials';
