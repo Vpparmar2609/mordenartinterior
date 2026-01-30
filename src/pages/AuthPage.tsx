@@ -10,7 +10,8 @@ import {
   Palette, 
   PenTool, 
   Users, 
-  ClipboardCheck, 
+  ClipboardCheck,
+  Calculator,
   User,
   Mail,
   Lock,
@@ -24,6 +25,7 @@ const roleIcons: Record<UserRole, React.ReactNode> = {
   designer: <PenTool className="w-5 h-5" />,
   execution_manager: <Users className="w-5 h-5" />,
   site_supervisor: <ClipboardCheck className="w-5 h-5" />,
+  account_manager: <Calculator className="w-5 h-5" />,
 };
 
 const AuthPage: React.FC = () => {

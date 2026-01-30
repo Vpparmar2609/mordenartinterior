@@ -18,6 +18,7 @@ import Approvals from "./pages/Approvals";
 import Messages from "./pages/Messages";
 import Documents from "./pages/Documents";
 import Notifications from "./pages/Notifications";
+import Accounts from "./pages/Accounts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/daily-reports" element={<DailyReports />} />
               <Route path="/issues" element={<Issues />} />
               <Route path="/approvals" element={<Approvals />} />
+              <Route path="/accounts" element={<Accounts />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/documents" element={<Documents />} />
               <Route path="/notifications" element={<Notifications />} />

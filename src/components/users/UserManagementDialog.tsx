@@ -23,7 +23,8 @@ import {
   Palette, 
   PenTool, 
   Users, 
-  ClipboardCheck, 
+  ClipboardCheck,
+  Calculator,
   Loader2,
   Shield
 } from 'lucide-react';
@@ -34,6 +35,7 @@ const roleIcons: Record<UserRole, React.ReactNode> = {
   designer: <PenTool className="w-4 h-4" />,
   execution_manager: <Users className="w-4 h-4" />,
   site_supervisor: <ClipboardCheck className="w-4 h-4" />,
+  account_manager: <Calculator className="w-4 h-4" />,
 };
 
 const roleColors: Record<UserRole, string> = {
@@ -42,6 +44,7 @@ const roleColors: Record<UserRole, string> = {
   designer: 'bg-blue-500/20 text-blue-500',
   execution_manager: 'bg-green-500/20 text-green-500',
   site_supervisor: 'bg-yellow-500/20 text-yellow-500',
+  account_manager: 'bg-emerald-500/20 text-emerald-500',
 };
 
 interface UserManagementDialogProps {
@@ -64,7 +67,7 @@ export const UserManagementDialog: React.FC<UserManagementDialogProps> = ({
     setSelectedRole(null);
   };
 
-  const roles: UserRole[] = ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor'];
+  const roles: UserRole[] = ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor', 'account_manager'];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -16,6 +16,7 @@ export const useUserRole = () => {
   const isDesigner = hasRole('designer');
   const isExecutionManager = hasRole('execution_manager');
   const isSiteSupervisor = hasRole('site_supervisor');
+  const isAccountManager = hasRole('account_manager');
 
   const canManageDesign = hasAnyRole(['admin', 'design_head']);
   const canManageExecution = hasAnyRole(['admin', 'execution_manager']);
@@ -27,6 +28,10 @@ export const useUserRole = () => {
   const canUploadDesigns = hasAnyRole(['admin', 'design_head', 'designer']);
   const canSubmitDailyReports = hasAnyRole(['admin', 'execution_manager', 'site_supervisor']);
   const canReportIssues = hasAnyRole(['admin', 'execution_manager', 'site_supervisor']);
+  const canViewAccounts = hasAnyRole(['admin', 'account_manager']);
+  const canManagePayments = hasAnyRole(['admin', 'account_manager']);
+  const canManageExtraWork = isAdmin;
+  const canSetProjectCost = isAdmin;
 
   return {
     role,
@@ -38,6 +43,7 @@ export const useUserRole = () => {
     isDesigner,
     isExecutionManager,
     isSiteSupervisor,
+    isAccountManager,
     canManageDesign,
     canManageExecution,
     canCreateProjects,
@@ -48,5 +54,9 @@ export const useUserRole = () => {
     canUploadDesigns,
     canSubmitDailyReports,
     canReportIssues,
+    canViewAccounts,
+    canManagePayments,
+    canManageExtraWork,
+    canSetProjectCost,
   };
 };
