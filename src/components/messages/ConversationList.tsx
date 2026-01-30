@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Lock, Users } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Conversation } from '@/hooks/useConversations';
 
@@ -77,17 +77,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                 <span className="font-medium text-foreground text-sm truncate">
                   {conversation.projectName}
                 </span>
-                {conversation.type === 'internal' ? (
-                  <Badge variant="outline" className="text-xs gap-1 shrink-0">
-                    <Lock className="w-2 h-2" />
-                    Internal
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-xs gap-1 shrink-0">
-                    <Users className="w-2 h-2" />
-                    Client
-                  </Badge>
-                )}
+                <Badge variant="outline" className="text-xs gap-1 shrink-0">
+                  <Lock className="w-2 h-2" />
+                  Internal
+                </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-1 truncate">
                 {conversation.lastMessage ? (

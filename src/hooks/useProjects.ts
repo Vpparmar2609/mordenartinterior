@@ -63,23 +63,51 @@ export const useProjects = () => {
   });
 
   const createProject = useMutation({
-    mutationFn: async (project: Omit<ProjectInsert, 'created_by'>) => {
+    mutationFn: async (project: Omit<ProjectInsert, 'created_by'> & { 
+      designer_id?: string | null; 
+      site_supervisor_id?: string | null; 
+    }) => {
       if (!user) throw new Error('Not authenticated');
+      
+      // Extract team members that go to project_team table
+      const { designer_id, site_supervisor_id, ...projectData } = project;
       
       const { data, error } = await supabase
         .from('projects')
         .insert({
-          ...project,
+          ...projectData,
           created_by: user.id,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Assign designer if provided
+      if (designer_id) {
+        await supabase.from('project_team').insert({
+          project_id: data.id,
+          user_id: designer_id,
+          role: 'designer',
+          assigned_by: user.id,
+        });
+      }
+
+      // Assign site supervisor if provided
+      if (site_supervisor_id) {
+        await supabase.from('project_team').insert({
+          project_id: data.id,
+          user_id: site_supervisor_id,
+          role: 'site_supervisor',
+          assigned_by: user.id,
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project-team'] });
       toast({
         title: 'Project created',
         description: 'New project has been created successfully.',

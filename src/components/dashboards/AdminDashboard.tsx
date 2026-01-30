@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { useProjects, useProjectStats } from '@/hooks/useProjects';
 import { useUsers } from '@/hooks/useUsers';
-import { useIssues } from '@/hooks/useIssues';
 import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
 import { UserManagementDialog } from '@/components/users/UserManagementDialog';
 import { ProjectList } from '@/components/projects/ProjectList';
@@ -14,8 +13,6 @@ import {
   Users, 
   CheckCircle2, 
   Clock, 
-  AlertTriangle,
-  TrendingUp,
   Palette,
   HardHat,
   Plus,
@@ -29,17 +26,15 @@ export const AdminDashboard: React.FC = () => {
   const { stats, isLoading: statsLoading } = useProjectStats();
   const { projects, isLoading: projectsLoading } = useProjects();
   const { users, isLoading: usersLoading } = useUsers();
-  const { issues, isLoading: issuesLoading } = useIssues();
 
   const isAdmin = role === 'admin';
-  const openIssues = issues.filter(i => i.status === 'open').length;
 
+  // Simplified stats - only project counts, no task numbers
   const statCards = [
     {
       title: 'Total Projects',
       value: statsLoading ? '...' : stats.total.toString(),
       icon: <FolderKanban className="w-5 h-5" />,
-      trend: stats.total > 0 ? { value: 12, isPositive: true } : undefined,
     },
     {
       title: 'Active Projects',
@@ -47,7 +42,7 @@ export const AdminDashboard: React.FC = () => {
       icon: <Clock className="w-5 h-5" />,
     },
     {
-      title: 'Design Pending',
+      title: 'In Design Phase',
       value: statsLoading ? '...' : stats.designPending.toString(),
       icon: <Palette className="w-5 h-5" />,
     },
@@ -57,23 +52,12 @@ export const AdminDashboard: React.FC = () => {
       icon: <HardHat className="w-5 h-5" />,
     },
     {
-      title: 'Near Completion',
-      value: statsLoading ? '...' : stats.nearCompletion.toString(),
-      icon: <TrendingUp className="w-5 h-5" />,
-    },
-    {
-      title: 'Open Issues',
-      value: issuesLoading ? '...' : openIssues.toString(),
-      icon: <AlertTriangle className="w-5 h-5" />,
-      trend: openIssues > 0 ? { value: openIssues, isPositive: false } : undefined,
-    },
-    {
       title: 'Completed',
       value: statsLoading ? '...' : stats.completed.toString(),
       icon: <CheckCircle2 className="w-5 h-5" />,
     },
     {
-      title: 'Total Users',
+      title: 'Team Members',
       value: usersLoading ? '...' : users.length.toString(),
       icon: <Users className="w-5 h-5" />,
     },
@@ -95,21 +79,20 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Grid - Simplified */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {statCards.map((stat, index) => (
           <StatsCard
             key={stat.title}
             title={stat.title}
             value={stat.value}
             icon={stat.icon}
-            trend={stat.trend}
             style={{ animationDelay: `${index * 50}ms` }}
           />
         ))}
       </div>
 
-      {/* Projects and Activity */}
+      {/* Projects and Team Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -158,12 +141,12 @@ export const AdminDashboard: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor'].map(role => {
-                  const count = users.filter(u => u.role === role).length;
+                {['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor', 'account_manager'].map(roleKey => {
+                  const count = users.filter(u => u.role === roleKey).length;
                   if (count === 0) return null;
                   return (
-                    <div key={role} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                      <span className="text-sm capitalize">{role.replace('_', ' ')}</span>
+                    <div key={roleKey} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                      <span className="text-sm capitalize">{roleKey.replace(/_/g, ' ')}</span>
                       <span className="text-sm font-medium">{count}</span>
                     </div>
                   );
@@ -173,41 +156,6 @@ export const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Open Issues */}
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="text-lg font-display flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-warning" />
-            Active Issues
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {issuesLoading ? (
-            <p className="text-muted-foreground text-sm">Loading issues...</p>
-          ) : issues.filter(i => i.status !== 'resolved').length === 0 ? (
-            <p className="text-muted-foreground text-sm text-center py-4">No open issues</p>
-          ) : (
-            <div className="space-y-2">
-              {issues.filter(i => i.status !== 'resolved').slice(0, 5).map(issue => (
-                <div key={issue.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{issue.issue_type}</p>
-                    <p className="text-xs text-muted-foreground truncate">{issue.project?.client_name}</p>
-                  </div>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    issue.severity === 'high' ? 'bg-destructive/20 text-destructive' :
-                    issue.severity === 'medium' ? 'bg-warning/20 text-warning' :
-                    'bg-muted text-muted-foreground'
-                  }`}>
-                    {issue.severity}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Dialogs */}
       <CreateProjectDialog open={showCreateProject} onOpenChange={setShowCreateProject} />

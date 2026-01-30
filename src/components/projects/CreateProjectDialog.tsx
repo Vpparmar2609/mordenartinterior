@@ -36,11 +36,13 @@ const projectSchema = z.object({
   location: z.string().min(3, 'Location must be at least 3 characters').max(200),
   flat_size: z.string().min(1, 'Flat size is required'),
   bhk: z.string().min(1, 'BHK is required'),
-  budget_range: z.string().min(1, 'Budget range is required'),
+  budget: z.string().min(1, 'Budget is required'),
   start_date: z.string().min(1, 'Start date is required'),
   deadline: z.string().min(1, 'Deadline is required'),
   design_head_id: z.string().optional(),
   execution_manager_id: z.string().optional(),
+  designer_id: z.string().optional(),
+  site_supervisor_id: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -59,6 +61,8 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
   
   const designHeads = getUsersByRole('design_head');
   const executionManagers = getUsersByRole('execution_manager');
+  const designers = getUsersByRole('designer');
+  const siteSupervisors = getUsersByRole('site_supervisor');
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -69,11 +73,13 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       location: '',
       flat_size: '',
       bhk: '',
-      budget_range: '',
+      budget: '',
       start_date: new Date().toISOString().split('T')[0],
       deadline: '',
       design_head_id: undefined,
       execution_manager_id: undefined,
+      designer_id: undefined,
+      site_supervisor_id: undefined,
     },
   });
 
@@ -85,11 +91,13 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       location: data.location,
       flat_size: data.flat_size,
       bhk: data.bhk,
-      budget_range: data.budget_range,
+      budget_range: data.budget, // Store as budget_range in DB
       start_date: data.start_date,
       deadline: data.deadline,
       design_head_id: data.design_head_id || null,
       execution_manager_id: data.execution_manager_id || null,
+      designer_id: data.designer_id || null,
+      site_supervisor_id: data.site_supervisor_id || null,
     });
     form.reset();
     onOpenChange(false);
@@ -204,24 +212,17 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
                 />
                 <FormField
                   control={form.control}
-                  name="budget_range"
+                  name="budget"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Budget Range</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="10-15L">₹10-15 Lakhs</SelectItem>
-                          <SelectItem value="15-25L">₹15-25 Lakhs</SelectItem>
-                          <SelectItem value="25-40L">₹25-40 Lakhs</SelectItem>
-                          <SelectItem value="40-60L">₹40-60 Lakhs</SelectItem>
-                          <SelectItem value="60L+">₹60 Lakhs+</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Budget (₹)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="2500000" 
+                          {...field} 
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -309,6 +310,58 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
                             <SelectItem value="none" disabled>No execution managers available</SelectItem>
                           ) : (
                             executionManagers.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="designer_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Designer</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Designer" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {designers.length === 0 ? (
+                            <SelectItem value="none" disabled>No designers available</SelectItem>
+                          ) : (
+                            designers.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="site_supervisor_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Site Supervisor</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Site Supervisor" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {siteSupervisors.length === 0 ? (
+                            <SelectItem value="none" disabled>No site supervisors available</SelectItem>
+                          ) : (
+                            siteSupervisors.map((user) => (
                               <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                             ))
                           )}
