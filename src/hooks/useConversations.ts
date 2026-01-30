@@ -6,7 +6,7 @@ export interface Conversation {
   id: string;
   projectId: string;
   projectName: string;
-  type: 'internal' | 'client';
+  type: 'internal';
   lastMessage: string | null;
   lastSenderName: string | null;
   lastMessageTime: string | null;
@@ -32,7 +32,7 @@ export const useConversations = () => {
       for (const project of projects) {
         const projectName = `${project.client_name} - ${project.location}`;
 
-        // Fetch last internal message
+        // Fetch last internal message only (no client conversations)
         const { data: internalMessages } = await supabase
           .from('project_messages')
           .select('id, message, created_at, sender_id')
@@ -41,20 +41,8 @@ export const useConversations = () => {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        // Fetch last client message
-        const { data: clientMessages } = await supabase
-          .from('project_messages')
-          .select('id, message, created_at, sender_id')
-          .eq('project_id', project.id)
-          .eq('is_internal', false)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
         // Get sender names for last messages
-        const senderIds = [
-          ...(internalMessages?.[0]?.sender_id ? [internalMessages[0].sender_id] : []),
-          ...(clientMessages?.[0]?.sender_id ? [clientMessages[0].sender_id] : []),
-        ];
+        const senderIds = internalMessages?.[0]?.sender_id ? [internalMessages[0].sender_id] : [];
 
         let senderNames: Record<string, string> = {};
         if (senderIds.length > 0) {
@@ -69,7 +57,7 @@ export const useConversations = () => {
           }, {} as Record<string, string>);
         }
 
-        // Add internal conversation
+        // Add internal conversation only
         conversations.push({
           id: `${project.id}-internal`,
           projectId: project.id,
@@ -80,20 +68,6 @@ export const useConversations = () => {
             ? senderNames[internalMessages[0].sender_id] ?? 'Unknown'
             : null,
           lastMessageTime: internalMessages?.[0]?.created_at ?? null,
-          unreadCount: 0, // TODO: implement read tracking
-        });
-
-        // Add client conversation
-        conversations.push({
-          id: `${project.id}-client`,
-          projectId: project.id,
-          projectName,
-          type: 'client',
-          lastMessage: clientMessages?.[0]?.message ?? null,
-          lastSenderName: clientMessages?.[0]?.sender_id 
-            ? senderNames[clientMessages[0].sender_id] ?? 'Unknown'
-            : null,
-          lastMessageTime: clientMessages?.[0]?.created_at ?? null,
           unreadCount: 0,
         });
       }

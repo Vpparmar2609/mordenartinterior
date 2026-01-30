@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useProjectPayments, stageLabels, PaymentStage } from '@/hooks/useProjectPayments';
+import { useProjects } from '@/hooks/useProjects';
 import { useNavigate } from 'react-router-dom';
 import { 
   IndianRupee, 
@@ -9,7 +10,8 @@ import {
   TrendingDown, 
   FileText,
   ArrowRight,
-  Loader2
+  Loader2,
+  FolderKanban
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -35,6 +37,7 @@ const getStatusColor = (status: string) => {
 export const AccountantDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { payments, isLoading, totals } = useProjectPayments();
+  const { projects } = useProjects();
 
   if (isLoading) {
     return (
@@ -57,9 +60,25 @@ export const AccountantDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Summary Cards - Simplified with project count */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="glass-card animate-fade-in">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Projects</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
+                  {projects.length}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-primary/10">
+                <FolderKanban className="w-6 h-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card animate-fade-in" style={{ animationDelay: '50ms' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -75,7 +94,7 @@ export const AccountantDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-card animate-fade-in" style={{ animationDelay: '50ms' }}>
+        <Card className="glass-card animate-fade-in" style={{ animationDelay: '100ms' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -91,7 +110,7 @@ export const AccountantDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-card animate-fade-in" style={{ animationDelay: '100ms' }}>
+        <Card className="glass-card animate-fade-in" style={{ animationDelay: '150ms' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -110,7 +129,7 @@ export const AccountantDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Projects with Pending Payments */}
-        <Card className="glass-card animate-fade-in" style={{ animationDelay: '150ms' }}>
+        <Card className="glass-card animate-fade-in" style={{ animationDelay: '200ms' }}>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <IndianRupee className="w-5 h-5" />
@@ -153,7 +172,7 @@ export const AccountantDashboard: React.FC = () => {
         </Card>
 
         {/* Stages Needing Attention */}
-        <Card className="glass-card animate-fade-in" style={{ animationDelay: '200ms' }}>
+        <Card className="glass-card animate-fade-in" style={{ animationDelay: '250ms' }}>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <TrendingDown className="w-5 h-5" />
