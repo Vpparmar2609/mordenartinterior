@@ -212,6 +212,7 @@ export const useProjectPayments = () => {
       paymentMethod,
       referenceNumber,
       notes,
+      proofUrl,
     }: {
       projectId: string;
       stageId: string;
@@ -220,6 +221,7 @@ export const useProjectPayments = () => {
       paymentMethod?: string;
       referenceNumber?: string;
       notes?: string;
+      proofUrl?: string;
     }) => {
       if (!user) throw new Error('Not authenticated');
 
@@ -233,6 +235,7 @@ export const useProjectPayments = () => {
           payment_method: paymentMethod || null,
           reference_number: referenceNumber || null,
           notes: notes || null,
+          proof_url: proofUrl || null,
           recorded_by: user.id,
         })
         .select()
@@ -346,6 +349,7 @@ export const useProjectPayments = () => {
       paymentMethod,
       referenceNumber,
       notes,
+      proofUrl,
     }: {
       extraWorkId: string;
       amount: number;
@@ -353,6 +357,7 @@ export const useProjectPayments = () => {
       paymentMethod?: string;
       referenceNumber?: string;
       notes?: string;
+      proofUrl?: string;
     }) => {
       if (!user) throw new Error('Not authenticated');
 
@@ -365,6 +370,7 @@ export const useProjectPayments = () => {
           payment_method: paymentMethod || null,
           reference_number: referenceNumber || null,
           notes: notes || null,
+          proof_url: proofUrl || null,
           recorded_by: user.id,
         })
         .select()
