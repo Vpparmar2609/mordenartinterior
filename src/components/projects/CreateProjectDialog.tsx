@@ -43,6 +43,7 @@ const projectSchema = z.object({
   execution_manager_id: z.string().optional(),
   designer_id: z.string().optional(),
   site_supervisor_id: z.string().optional(),
+  account_manager_id: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -63,6 +64,7 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
   const executionManagers = getUsersByRole('execution_manager');
   const designers = getUsersByRole('designer');
   const siteSupervisors = getUsersByRole('site_supervisor');
+  const accountManagers = getUsersByRole('account_manager');
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -80,6 +82,7 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       execution_manager_id: undefined,
       designer_id: undefined,
       site_supervisor_id: undefined,
+      account_manager_id: undefined,
     },
   });
 
@@ -98,6 +101,7 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       execution_manager_id: data.execution_manager_id || null,
       designer_id: data.designer_id || null,
       site_supervisor_id: data.site_supervisor_id || null,
+      account_manager_id: data.account_manager_id || null,
     });
     form.reset();
     onOpenChange(false);
@@ -362,6 +366,32 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
                             <SelectItem value="none" disabled>No site supervisors available</SelectItem>
                           ) : (
                             siteSupervisors.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="account_manager_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Manager</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Account Manager" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {accountManagers.length === 0 ? (
+                            <SelectItem value="none" disabled>No account managers available</SelectItem>
+                          ) : (
+                            accountManagers.map((user) => (
                               <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                             ))
                           )}

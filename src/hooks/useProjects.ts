@@ -65,12 +65,13 @@ export const useProjects = () => {
   const createProject = useMutation({
     mutationFn: async (project: Omit<ProjectInsert, 'created_by'> & { 
       designer_id?: string | null; 
-      site_supervisor_id?: string | null; 
+      site_supervisor_id?: string | null;
+      account_manager_id?: string | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
       
       // Extract team members that go to project_team table
-      const { designer_id, site_supervisor_id, ...projectData } = project;
+      const { designer_id, site_supervisor_id, account_manager_id, ...projectData } = project;
       
       const { data, error } = await supabase
         .from('projects')
@@ -99,6 +100,16 @@ export const useProjects = () => {
           project_id: data.id,
           user_id: site_supervisor_id,
           role: 'site_supervisor',
+          assigned_by: user.id,
+        });
+      }
+
+      // Assign account manager if provided
+      if (account_manager_id) {
+        await supabase.from('project_team').insert({
+          project_id: data.id,
+          user_id: account_manager_id,
+          role: 'account_manager',
           assigned_by: user.id,
         });
       }
