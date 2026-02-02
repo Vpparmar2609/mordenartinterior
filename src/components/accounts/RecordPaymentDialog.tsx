@@ -71,11 +71,8 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
 
     if (error) throw error;
 
-    const { data } = supabase.storage
-      .from('payment-proofs')
-      .getPublicUrl(fileName);
-
-    return data.publicUrl;
+    // Store the file path, not public URL (bucket is private)
+    return fileName;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

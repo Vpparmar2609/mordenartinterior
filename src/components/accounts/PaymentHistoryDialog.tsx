@@ -94,9 +94,12 @@ export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
         .single();
 
       if (transaction?.proof_url) {
-        // Extract file path from URL and delete
-        const urlParts = transaction.proof_url.split('/');
-        const filePath = urlParts.slice(-2).join('/');
+        // Extract file path - handle both legacy URLs and new paths
+        let filePath = transaction.proof_url;
+        if (transaction.proof_url.includes('://')) {
+          const urlParts = transaction.proof_url.split('/');
+          filePath = urlParts.slice(-2).join('/');
+        }
         await supabase.storage.from('payment-proofs').remove([filePath]);
       }
 
@@ -126,13 +129,22 @@ export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
   });
 
   const getSignedUrl = async (proofUrl: string) => {
-    // Extract file path from URL
-    const urlParts = proofUrl.split('/');
-    const filePath = urlParts.slice(-2).join('/');
+    // proofUrl is now just the file path (e.g., "projectId/filename.jpg")
+    // If it's a full URL (legacy), extract the path
+    let filePath = proofUrl;
+    if (proofUrl.includes('://')) {
+      const urlParts = proofUrl.split('/');
+      filePath = urlParts.slice(-2).join('/');
+    }
     
-    const { data } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from('payment-proofs')
       .createSignedUrl(filePath, 3600);
+
+    if (error) {
+      console.error('Error getting signed URL:', error);
+      return;
+    }
 
     if (data?.signedUrl) {
       window.open(data.signedUrl, '_blank');
