@@ -118,12 +118,21 @@ const ExecutionTasks: React.FC = () => {
         </Badge>
       );
     }
+
+    if (countdown.status === 'no_timeline') {
+      return (
+        <Badge className="bg-muted text-muted-foreground border-0 gap-1">
+          <Clock className="w-3 h-3" />
+          No timeline
+        </Badge>
+      );
+    }
     
     if (countdown.status === 'not_started') {
       return (
         <Badge className="bg-muted text-muted-foreground border-0 gap-1">
           <Timer className="w-3 h-3" />
-          {stage.daysAllowed} days (not started)
+          {stage.daysAllowed} days (waiting)
         </Badge>
       );
     }

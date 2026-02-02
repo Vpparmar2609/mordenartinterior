@@ -4,11 +4,12 @@ export interface ExecutionStage {
   id: string;
   name: string;
   orderRange: [number, number]; // inclusive range of order_index
-  daysAllowed: number;
+  daysAllowed: number | null; // null means no timeline
   color: string;
 }
 
 export const EXECUTION_STAGES: ExecutionStage[] = [
+  { id: 'client_meeting', name: 'Client Meeting', orderRange: [1, 3], daysAllowed: null, color: 'bg-slate-500' },
   { id: 'pop', name: 'POP Stage', orderRange: [4, 9], daysAllowed: 8, color: 'bg-blue-500' },
   { id: 'furniture', name: 'Furniture Stage', orderRange: [10, 17], daysAllowed: 25, color: 'bg-amber-500' },
   { id: 'laminate', name: 'Laminate Work', orderRange: [18, 22], daysAllowed: 30, color: 'bg-purple-500' },
@@ -34,10 +35,10 @@ export interface StageInfo {
   completedAt: Date | null;
   isActive: boolean;
   countdown: {
-    daysLeft: number;
+    daysLeft: number | null;
     startedAt: Date | null;
     isOverdue: boolean;
-    status: 'not_started' | 'in_progress' | 'completed' | 'overdue';
+    status: 'no_timeline' | 'not_started' | 'in_progress' | 'completed' | 'overdue';
   };
 }
 
@@ -71,27 +72,34 @@ export function calculateStageInfo(
       }, null as Date | null)
     : null;
 
+  // Handle stages without timeline (Client Meeting)
+  if (stage.daysAllowed === null) {
+    return {
+      stage,
+      tasks: stageTasks,
+      isCompleted,
+      completedAt,
+      isActive: !isCompleted, // Active until completed
+      countdown: {
+        daysLeft: null,
+        startedAt: null,
+        isOverdue: false,
+        status: isCompleted ? 'completed' : 'no_timeline',
+      },
+    };
+  }
+
   // Determine if this stage is active and calculate countdown
   let isActive = false;
   let startedAt: Date | null = null;
   let daysLeft = stage.daysAllowed;
-  let status: 'not_started' | 'in_progress' | 'completed' | 'overdue' = 'not_started';
+  let status: 'no_timeline' | 'not_started' | 'in_progress' | 'completed' | 'overdue' = 'not_started';
 
   if (isCompleted) {
     status = 'completed';
     daysLeft = 0;
-  } else if (stage.id === 'pop') {
-    // POP stage: active immediately, count from first task being worked on
-    const firstTaskWithProgress = stageTasks.find(t => t.status === 'in_progress' || t.status === 'completed');
-    if (firstTaskWithProgress) {
-      isActive = true;
-      startedAt = new Date(firstTaskWithProgress.updated_at);
-      const daysPassed = Math.floor((Date.now() - startedAt.getTime()) / (1000 * 60 * 60 * 24));
-      daysLeft = Math.max(0, stage.daysAllowed - daysPassed);
-      status = daysLeft <= 0 ? 'overdue' : 'in_progress';
-    }
   } else if (previousStageInfo?.isCompleted && previousStageInfo.completedAt) {
-    // Other stages: active when previous stage is completed
+    // Stage becomes active when previous stage is completed
     isActive = true;
     startedAt = previousStageInfo.completedAt;
     const daysPassed = Math.floor((Date.now() - startedAt.getTime()) / (1000 * 60 * 60 * 24));
