@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,7 @@ import {
   Trash2,
   Clock,
   XCircle,
+  FolderOpen,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -50,9 +51,48 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [files, setFiles] = useState<UploadedFile[]>(existingFiles);
+  const [fileCount, setFileCount] = useState<number>(0);
 
   const bucketName = taskType === 'design' ? 'design-files' : 'execution-photos';
   const tableName = taskType === 'design' ? 'design_task_files' : 'execution_task_photos';
+
+  // Fetch initial file count and subscribe to realtime updates
+  useEffect(() => {
+    const fetchFileCount = async () => {
+      const { count, error } = await supabase
+        .from(tableName)
+        .select('*', { count: 'exact', head: true })
+        .eq('task_id', taskId);
+      
+      if (!error && count !== null) {
+        setFileCount(count);
+      }
+    };
+
+    fetchFileCount();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel(`${tableName}-${taskId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: tableName,
+          filter: `task_id=eq.${taskId}`,
+        },
+        () => {
+          // Refetch count on any change
+          fetchFileCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [taskId, tableName]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = event.target.files;
@@ -204,10 +244,14 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
           )}
           Upload
         </Button>
-        {files.length > 0 && (
-          <span className="text-xs text-muted-foreground">
-            {files.length} file{files.length > 1 ? 's' : ''}
-          </span>
+        {fileCount > 0 && (
+          <Badge 
+            variant="secondary" 
+            className="h-6 px-2 gap-1 text-xs font-medium bg-primary/10 text-primary border-0"
+          >
+            <FolderOpen className="w-3 h-3" />
+            {fileCount}
+          </Badge>
         )}
       </div>
     );
