@@ -136,7 +136,7 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter amount"
               min="1"
-              step="100"
+              step="any"
               required
             />
           </div>
