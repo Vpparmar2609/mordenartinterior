@@ -9,11 +9,12 @@ import {
   Search, 
   CheckCircle2, 
   Clock,
-  Camera,
   ChevronDown,
   ChevronRight,
   Calendar,
-  Loader2
+  Loader2,
+  Timer,
+  AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAllExecutionTasks } from '@/hooks/useProjectTasks';
@@ -22,18 +23,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { TaskFileUpload } from '@/components/tasks/TaskFileUpload';
 import { FileApprovalSection } from '@/components/approvals/FileApprovalSection';
+import { getProjectStagesInfo, StageInfo, EXECUTION_STAGES, getStageForTask } from '@/utils/executionStages';
 
 const ExecutionTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
+  const [expandedStages, setExpandedStages] = useState<string[]>([]);
   const { user, role } = useAuth();
   const { isAdmin, isExecutionManager } = useUserRole();
   const { projects, isLoading: projectsLoading } = useProjects();
   const { tasks: allTasks, isLoading: tasksLoading, updateTask } = useAllExecutionTasks();
   const canApproveFiles = isAdmin || isExecutionManager;
 
-  // Group tasks by project
-  const projectsWithTasks = useMemo(() => {
+  // Group tasks by project with stage info
+  const projectsWithStages = useMemo(() => {
     const grouped = allTasks.reduce((acc, task) => {
       const projectId = task.project_id;
       if (!acc[projectId]) {
@@ -45,20 +48,24 @@ const ExecutionTasks: React.FC = () => {
 
     return Object.entries(grouped).map(([projectId, tasks]) => {
       const project = projects.find(p => p.id === projectId);
+      const sortedTasks = tasks.sort((a, b) => a.order_index - b.order_index);
+      const stagesInfo = getProjectStagesInfo(sortedTasks as any);
       const completed = tasks.filter(t => t.status === 'completed').length;
-      const totalTasks = 35; // 35 execution tasks per project
+      const totalTasks = 35;
+      
       return {
         id: projectId,
         clientName: project?.client_name || 'Unknown',
         progress: Math.round((completed / totalTasks) * 100),
-        tasks: tasks.sort((a, b) => a.order_index - b.order_index),
+        tasks: sortedTasks,
+        stagesInfo,
         totalTasks,
       };
     });
   }, [allTasks, projects]);
 
   // Filter based on search
-  const filteredProjects = projectsWithTasks.filter(p =>
+  const filteredProjects = projectsWithStages.filter(p =>
     p.clientName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -67,6 +74,14 @@ const ExecutionTasks: React.FC = () => {
       prev.includes(projectId) 
         ? prev.filter(id => id !== projectId)
         : [...prev, projectId]
+    );
+  };
+
+  const toggleStage = (stageKey: string) => {
+    setExpandedStages(prev => 
+      prev.includes(stageKey) 
+        ? prev.filter(id => id !== stageKey)
+        : [...prev, stageKey]
     );
   };
 
@@ -92,6 +107,51 @@ const ExecutionTasks: React.FC = () => {
     }
   };
 
+  const getStageCountdownBadge = (stageInfo: StageInfo) => {
+    const { countdown, stage } = stageInfo;
+    
+    if (countdown.status === 'completed') {
+      return (
+        <Badge className="bg-success/20 text-success border-0 gap-1">
+          <CheckCircle2 className="w-3 h-3" />
+          Completed
+        </Badge>
+      );
+    }
+    
+    if (countdown.status === 'not_started') {
+      return (
+        <Badge className="bg-muted text-muted-foreground border-0 gap-1">
+          <Timer className="w-3 h-3" />
+          {stage.daysAllowed} days (not started)
+        </Badge>
+      );
+    }
+    
+    if (countdown.status === 'overdue') {
+      return (
+        <Badge className="bg-destructive/20 text-destructive border-0 gap-1 animate-pulse">
+          <AlertTriangle className="w-3 h-3" />
+          Overdue!
+        </Badge>
+      );
+    }
+    
+    // In progress
+    const urgencyClass = countdown.daysLeft <= 3 
+      ? 'bg-destructive/20 text-destructive' 
+      : countdown.daysLeft <= 7 
+        ? 'bg-warning/20 text-warning' 
+        : 'bg-primary/20 text-primary';
+    
+    return (
+      <Badge className={cn(urgencyClass, 'border-0 gap-1')}>
+        <Timer className="w-3 h-3" />
+        {countdown.daysLeft} days left
+      </Badge>
+    );
+  };
+
   const handleToggleStatus = (taskId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
     updateTask.mutate({ id: taskId, status: newStatus as any });
@@ -105,78 +165,100 @@ const ExecutionTasks: React.FC = () => {
     );
   }
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">Execution Tasks</h1>
-          <p className="text-muted-foreground mt-1">Track site work progress and completion</p>
-        </div>
-      </div>
+  function renderStageCard(stageInfo: StageInfo, projectId: string, stageIndex: number) {
+    const stageKey = `${projectId}-${stageInfo.stage.id}`;
+    const isExpanded = expandedStages.includes(stageKey);
+    const completedCount = stageInfo.tasks.filter(t => t.status === 'completed').length;
+    const totalCount = stageInfo.tasks.length;
+    const stageProgress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-      {canApproveFiles ? (
-        <Tabs defaultValue="tasks" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="approvals">Photo Approvals</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="tasks" className="space-y-4">
-            {/* Search */}
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Projects with Tasks */}
-            {filteredProjects.length === 0 ? (
-              <div className="text-center py-12 glass-card rounded-xl">
-                <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
-              </div>
+    return (
+      <div 
+        key={stageKey}
+        className={cn(
+          "border rounded-lg overflow-hidden",
+          stageInfo.isCompleted ? 'border-success/30 bg-success/5' :
+          stageInfo.isActive ? 'border-primary/30 bg-primary/5' : 'border-border/50'
+        )}
+      >
+        {/* Stage Header */}
+        <div 
+          className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/30 transition-colors"
+          onClick={() => toggleStage(stageKey)}
+        >
+          <div className="flex items-center gap-3">
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
             ) : (
-              <div className="space-y-4">
-                {filteredProjects.map((project, index) => renderProjectCard(project, index))}
-              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
             )}
-          </TabsContent>
-          
-          <TabsContent value="approvals">
-            <FileApprovalSection type="execution" />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <>
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search projects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+            <div className={cn("w-3 h-3 rounded-full", stageInfo.stage.color)} />
+            <div>
+              <span className="font-medium">{stageInfo.stage.name}</span>
+              <span className="text-sm text-muted-foreground ml-2">
+                ({completedCount}/{totalCount} tasks)
+              </span>
+            </div>
           </div>
+          <div className="flex items-center gap-3">
+            {getStageCountdownBadge(stageInfo)}
+            <Progress value={stageProgress} className="w-20 h-2" />
+            <span className="text-sm font-medium w-10 text-right">{stageProgress}%</span>
+          </div>
+        </div>
 
-          {/* Projects with Tasks */}
-          {filteredProjects.length === 0 ? (
-            <div className="text-center py-12 glass-card rounded-xl">
-              <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredProjects.map((project, index) => renderProjectCard(project, index))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
+        {/* Stage Tasks */}
+        {isExpanded && (
+          <div className="border-t border-border/30 p-3 space-y-2 bg-background/50">
+            {stageInfo.tasks.map((task, taskIndex) => (
+              <div 
+                key={task.id}
+                className={cn(
+                  "flex items-center justify-between p-2 rounded-lg",
+                  task.status === 'completed' ? 'bg-success/5' : 
+                  task.status === 'in_progress' ? 'bg-warning/5' : 'bg-muted/20'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {getStatusIcon(task.status)}
+                  <span className={cn(
+                    "text-sm",
+                    task.status === 'completed' && 'text-muted-foreground line-through'
+                  )}>
+                    {task.order_index}. {task.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {task.completed_date && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(task.completed_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                    </div>
+                  )}
+                  <TaskFileUpload 
+                    taskId={task.id} 
+                    taskType="execution" 
+                    compact 
+                  />
+                  {getStatusBadge(task.status)}
+                  <Button 
+                    size="sm" 
+                    variant={task.status === 'completed' ? 'ghost' : 'outline'}
+                    className="h-7 text-xs"
+                    onClick={() => handleToggleStatus(task.id, task.status)}
+                    disabled={updateTask.isPending}
+                  >
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    {task.status === 'completed' ? 'Undo' : 'Done'}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   function renderProjectCard(project: typeof filteredProjects[0], index: number) {
     return (
@@ -213,58 +295,98 @@ const ExecutionTasks: React.FC = () => {
         </CardHeader>
         
         {expandedProjects.includes(project.id) && (
-          <CardContent className="pt-0">
-            <div className="space-y-2">
-              {project.tasks.map((task, taskIndex) => (
-                <div 
-                  key={task.id}
-                  className={cn(
-                    "flex items-center justify-between p-3 rounded-lg",
-                    task.status === 'completed' ? 'bg-success/5' : 
-                    task.status === 'in_progress' ? 'bg-warning/5' : 'bg-muted/30'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(task.status)}
-                    <span className={cn(
-                      "font-medium",
-                      task.status === 'completed' && 'text-muted-foreground'
-                    )}>
-                      {taskIndex + 1}. {task.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {task.completed_date && (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(task.completed_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                      </div>
-                    )}
-                    <TaskFileUpload 
-                      taskId={task.id} 
-                      taskType="execution" 
-                      compact 
-                    />
-                    {getStatusBadge(task.status)}
-                    <Button 
-                      size="sm" 
-                      variant={task.status === 'completed' ? 'ghost' : 'outline'}
-                      className="h-8"
-                      onClick={() => handleToggleStatus(task.id, task.status)}
-                      disabled={updateTask.isPending}
-                    >
-                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                      {task.status === 'completed' ? 'Undo' : 'Mark Done'}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <CardContent className="pt-0 space-y-3">
+            {project.stagesInfo.map((stageInfo, stageIndex) => 
+              renderStageCard(stageInfo, project.id, stageIndex)
+            )}
           </CardContent>
         )}
       </Card>
     );
   }
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">Execution Tasks</h1>
+          <p className="text-muted-foreground mt-1">Track site work progress across 5 stages</p>
+        </div>
+        
+        {/* Stage Legend */}
+        <div className="flex flex-wrap gap-2">
+          {EXECUTION_STAGES.map(stage => (
+            <div key={stage.id} className="flex items-center gap-1.5 text-xs">
+              <div className={cn("w-2 h-2 rounded-full", stage.color)} />
+              <span className="text-muted-foreground">{stage.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {canApproveFiles ? (
+        <Tabs defaultValue="tasks" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="approvals">Photo Approvals</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="tasks" className="space-y-4">
+            {/* Search */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Projects with Stages */}
+            {filteredProjects.length === 0 ? (
+              <div className="text-center py-12 glass-card rounded-xl">
+                <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredProjects.map((project, index) => renderProjectCard(project, index))}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="approvals">
+            <FileApprovalSection type="execution" />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <>
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Projects with Stages */}
+          {filteredProjects.length === 0 ? (
+            <div className="text-center py-12 glass-card rounded-xl">
+              <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredProjects.map((project, index) => renderProjectCard(project, index))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 };
 
 export default ExecutionTasks;
