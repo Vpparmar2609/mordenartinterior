@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,48 +17,100 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 import { useProjectPayments } from '@/hooks/useProjectPayments';
-import { Loader2, IndianRupee } from 'lucide-react';
+import { Loader2, IndianRupee, Upload, X, Image } from 'lucide-react';
 
 interface RecordExtraWorkPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   extraWorkId: string;
+  projectId: string;
 }
 
 export const RecordExtraWorkPaymentDialog: React.FC<RecordExtraWorkPaymentDialogProps> = ({
   open,
   onOpenChange,
   extraWorkId,
+  projectId,
 }) => {
   const [amount, setAmount] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { recordExtraWorkPayment } = useProjectPayments();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+      setProofFile(file);
+    }
+  };
+
+  const uploadProof = async (): Promise<string | null> => {
+    if (!proofFile) return null;
+
+    const fileExt = proofFile.name.split('.').pop();
+    const fileName = `extra-work/${projectId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const { error } = await supabase.storage
+      .from('payment-proofs')
+      .upload(fileName, proofFile);
+
+    if (error) throw error;
+
+    const { data } = supabase.storage
+      .from('payment-proofs')
+      .getPublicUrl(fileName);
+
+    return data.publicUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!extraWorkId || !amount) return;
 
-    await recordExtraWorkPayment.mutateAsync({
-      extraWorkId,
-      amount: parseFloat(amount),
-      paymentDate,
-      paymentMethod: paymentMethod || undefined,
-      referenceNumber: referenceNumber || undefined,
-      notes: notes || undefined,
-    });
+    setIsUploading(true);
+    try {
+      let proofUrl: string | null = null;
+      if (proofFile) {
+        proofUrl = await uploadProof();
+      }
 
-    // Reset form
-    setAmount('');
-    setPaymentMethod('');
-    setReferenceNumber('');
-    setNotes('');
-    onOpenChange(false);
+      await recordExtraWorkPayment.mutateAsync({
+        extraWorkId,
+        amount: parseFloat(amount),
+        paymentDate,
+        paymentMethod: paymentMethod || undefined,
+        referenceNumber: referenceNumber || undefined,
+        notes: notes || undefined,
+        proofUrl: proofUrl || undefined,
+      });
+
+      // Reset form
+      setAmount('');
+      setPaymentMethod('');
+      setReferenceNumber('');
+      setNotes('');
+      setProofFile(null);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error recording payment:', error);
+    } finally {
+      setIsUploading(false);
+    }
   };
+
+  const isPending = recordExtraWorkPayment.isPending || isUploading;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -137,12 +189,51 @@ export const RecordExtraWorkPaymentDialog: React.FC<RecordExtraWorkPaymentDialog
             />
           </div>
 
+          {/* Proof Upload */}
+          <div className="space-y-2">
+            <Label>Payment Proof (Screenshot/Photo)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            {proofFile ? (
+              <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/50">
+                <Image className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm flex-1 truncate">{proofFile.name}</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setProofFile(null)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Proof
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Max 5MB. Upload screenshot, check photo, or payment proof.
+            </p>
+          </div>
+
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={recordExtraWorkPayment.isPending || !amount}>
-              {recordExtraWorkPayment.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Button type="submit" disabled={isPending || !amount}>
+              {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Record Payment
             </Button>
           </div>

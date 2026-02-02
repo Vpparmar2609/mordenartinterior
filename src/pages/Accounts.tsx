@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useProjectPayments, stageLabels, PaymentStage } from '@/hooks/useProjectPayments';
+import { useProjectPayments, stageLabels, PaymentStage, PaymentStageData } from '@/hooks/useProjectPayments';
 import { useUserRole } from '@/hooks/useUserRole';
 import { 
   IndianRupee, 
@@ -14,7 +14,8 @@ import {
   ChevronUp,
   Plus,
   FileText,
-  Loader2
+  Loader2,
+  History
 } from 'lucide-react';
 import {
   Collapsible,
@@ -25,6 +26,8 @@ import { SetProjectCostDialog } from '@/components/accounts/SetProjectCostDialog
 import { RecordPaymentDialog } from '@/components/accounts/RecordPaymentDialog';
 import { AddExtraWorkDialog } from '@/components/accounts/AddExtraWorkDialog';
 import { RecordExtraWorkPaymentDialog } from '@/components/accounts/RecordExtraWorkPaymentDialog';
+import { PaymentHistoryDialog } from '@/components/accounts/PaymentHistoryDialog';
+import { ExtraWorkPaymentHistoryDialog } from '@/components/accounts/ExtraWorkPaymentHistoryDialog';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
@@ -54,7 +57,11 @@ const Accounts: React.FC = () => {
   const [selectedStage, setSelectedStage] = useState<{ id: string; projectId: string; stage: PaymentStage } | null>(null);
   const [extraWorkDialogOpen, setExtraWorkDialogOpen] = useState(false);
   const [extraWorkPaymentDialogOpen, setExtraWorkPaymentDialogOpen] = useState(false);
-  const [selectedExtraWork, setSelectedExtraWork] = useState<{ id: string; projectId: string } | null>(null);
+  const [selectedExtraWork, setSelectedExtraWork] = useState<{ id: string; projectId: string; description: string } | null>(null);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [historyStage, setHistoryStage] = useState<{ id: string; stage: PaymentStage } | null>(null);
+  const [extraWorkHistoryOpen, setExtraWorkHistoryOpen] = useState(false);
+  const [historyExtraWork, setHistoryExtraWork] = useState<{ id: string; description: string } | null>(null);
   
   const { payments, isLoading, totals } = useProjectPayments();
   const { isAdmin, canViewAccounts } = useUserRole();
@@ -65,6 +72,40 @@ const Accounts: React.FC = () => {
 
   // Only show projects that have a cost set
   const projectsWithCost = filteredPayments.filter(p => p.total_cost > 0);
+
+  // Calculate carry-forward balances for stages
+  const calculateCarryForwardBalances = (stages: PaymentStageData[]) => {
+    const stageOrder: PaymentStage[] = ['booking', 'pop_stage', 'plywood_stage', 'lamination_stage', 'paint_stage', 'fabric_stage'];
+    let carryForward = 0;
+    
+    return stageOrder.map(stageName => {
+      const stage = stages.find(s => s.stage === stageName);
+      if (!stage) return null;
+      
+      const effectivePaid = stage.paid_amount + carryForward;
+      const balance = stage.required_amount - effectivePaid;
+      const excess = Math.max(0, effectivePaid - stage.required_amount);
+      
+      // Calculate new status based on effective paid
+      let effectiveStatus: 'pending' | 'partial' | 'completed' = 'pending';
+      if (effectivePaid >= stage.required_amount) {
+        effectiveStatus = 'completed';
+      } else if (effectivePaid > 0) {
+        effectiveStatus = 'partial';
+      }
+      
+      // Carry forward excess to next stage
+      carryForward = excess;
+      
+      return {
+        ...stage,
+        effectivePaid,
+        effectiveBalance: Math.max(0, balance),
+        effectiveStatus,
+        hasCarryForward: stage.paid_amount < effectivePaid,
+      };
+    }).filter(Boolean);
+  };
   const projectsWithoutCost = filteredPayments.filter(p => p.total_cost === 0);
 
   if (!canViewAccounts) {
@@ -267,52 +308,81 @@ const Accounts: React.FC = () => {
                     <div className="space-y-3">
                       <h4 className="font-medium text-foreground">Payment Stages</h4>
                       <div className="grid gap-3">
-                        {project.stages.map((stage) => (
-                          <div
-                            key={stage.id}
-                            className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/60"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div>
-                                <p className="font-medium">{stageLabels[stage.stage as PaymentStage]}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {stage.percentage}% • Required: {formatCurrency(stage.required_amount)}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <p className="text-sm text-muted-foreground">Paid</p>
-                                <p className="font-medium">{formatCurrency(stage.paid_amount)}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-sm text-muted-foreground">Balance</p>
-                                <p className="font-medium">
-                                  {formatCurrency(stage.required_amount - stage.paid_amount)}
-                                </p>
-                              </div>
-                              <Badge className={getStatusColor(stage.status)}>
-                                {stage.status.charAt(0).toUpperCase() + stage.status.slice(1)}
-                              </Badge>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedStage({
-                                    id: stage.id,
-                                    projectId: project.project_id,
-                                    stage: stage.stage as PaymentStage,
-                                  });
-                                  setPaymentDialogOpen(true);
-                                }}
-                                disabled={stage.status === 'completed'}
+                        {(() => {
+                          const stagesWithCarryForward = calculateCarryForwardBalances(project.stages);
+                          return stagesWithCarryForward.map((stage) => {
+                            if (!stage) return null;
+                            return (
+                              <div
+                                key={stage.id}
+                                className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/60"
                               >
-                                <Plus className="w-4 h-4 mr-1" />
-                                Payment
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                                <div className="flex items-center gap-4">
+                                  <div>
+                                    <p className="font-medium">{stageLabels[stage.stage as PaymentStage]}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {stage.percentage}% • Required: {formatCurrency(stage.required_amount)}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <div className="text-right">
+                                    <p className="text-sm text-muted-foreground">Paid</p>
+                                    <p className="font-medium">
+                                      {formatCurrency(stage.effectivePaid)}
+                                      {stage.hasCarryForward && (
+                                        <span className="text-xs text-success ml-1">(+carry)</span>
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm text-muted-foreground">Balance</p>
+                                    <p className="font-medium">
+                                      {stage.effectiveBalance > 0 
+                                        ? formatCurrency(stage.effectiveBalance)
+                                        : stage.effectivePaid > stage.required_amount
+                                          ? <span className="text-success">-{formatCurrency(stage.effectivePaid - stage.required_amount)}</span>
+                                          : formatCurrency(0)
+                                      }
+                                    </p>
+                                  </div>
+                                  <Badge className={getStatusColor(stage.effectiveStatus)}>
+                                    {stage.effectiveStatus.charAt(0).toUpperCase() + stage.effectiveStatus.slice(1)}
+                                  </Badge>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setHistoryStage({
+                                        id: stage.id,
+                                        stage: stage.stage as PaymentStage,
+                                      });
+                                      setHistoryDialogOpen(true);
+                                    }}
+                                    title="View History"
+                                  >
+                                    <History className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedStage({
+                                        id: stage.id,
+                                        projectId: project.project_id,
+                                        stage: stage.stage as PaymentStage,
+                                      });
+                                      setPaymentDialogOpen(true);
+                                    }}
+                                  >
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    Payment
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
 
@@ -361,12 +431,27 @@ const Accounts: React.FC = () => {
                                   {work.status.charAt(0).toUpperCase() + work.status.slice(1)}
                                 </Badge>
                                 <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setHistoryExtraWork({
+                                      id: work.id,
+                                      description: work.description,
+                                    });
+                                    setExtraWorkHistoryOpen(true);
+                                  }}
+                                  title="View History"
+                                >
+                                  <History className="w-4 h-4" />
+                                </Button>
+                                <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => {
                                     setSelectedExtraWork({
                                       id: work.id,
                                       projectId: project.project_id,
+                                      description: work.description,
                                     });
                                     setExtraWorkPaymentDialogOpen(true);
                                   }}
@@ -415,6 +500,21 @@ const Accounts: React.FC = () => {
         open={extraWorkPaymentDialogOpen}
         onOpenChange={setExtraWorkPaymentDialogOpen}
         extraWorkId={selectedExtraWork?.id || ''}
+        projectId={selectedExtraWork?.projectId || ''}
+      />
+
+      <PaymentHistoryDialog
+        open={historyDialogOpen}
+        onOpenChange={setHistoryDialogOpen}
+        stageId={historyStage?.id || ''}
+        stageName={historyStage ? stageLabels[historyStage.stage] : ''}
+      />
+
+      <ExtraWorkPaymentHistoryDialog
+        open={extraWorkHistoryOpen}
+        onOpenChange={setExtraWorkHistoryOpen}
+        extraWorkId={historyExtraWork?.id || ''}
+        description={historyExtraWork?.description || ''}
       />
     </div>
   );

@@ -413,6 +413,7 @@ export type Database = {
           notes: string | null
           payment_date: string
           payment_method: string | null
+          proof_url: string | null
           recorded_by: string
           reference_number: string | null
         }
@@ -424,6 +425,7 @@ export type Database = {
           notes?: string | null
           payment_date?: string
           payment_method?: string | null
+          proof_url?: string | null
           recorded_by: string
           reference_number?: string | null
         }
@@ -435,6 +437,7 @@ export type Database = {
           notes?: string | null
           payment_date?: string
           payment_method?: string | null
+          proof_url?: string | null
           recorded_by?: string
           reference_number?: string | null
         }
@@ -587,6 +590,7 @@ export type Database = {
           payment_date: string
           payment_method: string | null
           project_id: string
+          proof_url: string | null
           recorded_by: string
           reference_number: string | null
           stage_id: string
@@ -599,6 +603,7 @@ export type Database = {
           payment_date?: string
           payment_method?: string | null
           project_id: string
+          proof_url?: string | null
           recorded_by: string
           reference_number?: string | null
           stage_id: string
@@ -611,6 +616,7 @@ export type Database = {
           payment_date?: string
           payment_method?: string | null
           project_id?: string
+          proof_url?: string | null
           recorded_by?: string
           reference_number?: string | null
           stage_id?: string
