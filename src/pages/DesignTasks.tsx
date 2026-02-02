@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,9 @@ import {
   FileImage,
   ChevronDown,
   ChevronRight,
-  Loader2
+  Loader2,
+  Timer,
+  AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAllDesignTasks } from '@/hooks/useProjectTasks';
@@ -22,15 +24,87 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { TaskFileUpload } from '@/components/tasks/TaskFileUpload';
 import { FileApprovalSection } from '@/components/approvals/FileApprovalSection';
+import { supabase } from '@/integrations/supabase/client';
+import { differenceInDays, addDays } from 'date-fns';
+
+const DESIGN_DEADLINE_DAYS = 20;
+
+const getDesignDaysLeft = (assignedAt: string) => {
+  const assignedDate = new Date(assignedAt);
+  const designDeadline = addDays(assignedDate, DESIGN_DEADLINE_DAYS);
+  const today = new Date();
+  return differenceInDays(designDeadline, today);
+};
+
+const getTimelineDisplay = (daysLeft: number | null) => {
+  if (daysLeft === null) return null;
+  
+  if (daysLeft < 0) {
+    return { 
+      text: `${Math.abs(daysLeft)}d overdue`, 
+      className: 'text-destructive bg-destructive/10',
+      progressClass: '[&>div]:bg-destructive'
+    };
+  } else if (daysLeft === 0) {
+    return { 
+      text: 'Due today', 
+      className: 'text-warning bg-warning/10',
+      progressClass: '[&>div]:bg-warning'
+    };
+  } else if (daysLeft <= 5) {
+    return { 
+      text: `${daysLeft}d left`, 
+      className: 'text-destructive bg-destructive/10',
+      progressClass: '[&>div]:bg-destructive'
+    };
+  } else if (daysLeft <= 10) {
+    return { 
+      text: `${daysLeft}d left`, 
+      className: 'text-warning bg-warning/10',
+      progressClass: '[&>div]:bg-warning'
+    };
+  } else {
+    return { 
+      text: `${daysLeft}d left`, 
+      className: 'text-success bg-success/10',
+      progressClass: '[&>div]:bg-success'
+    };
+  }
+};
 
 const DesignTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
+  const [projectAssignments, setProjectAssignments] = useState<Record<string, string>>({});
   const { user, role } = useAuth();
   const { isAdmin, isDesignHead } = useUserRole();
   const { projects, isLoading: projectsLoading } = useProjects();
   const { tasks: allTasks, isLoading: tasksLoading, updateTask } = useAllDesignTasks();
   const canApproveFiles = isAdmin || isDesignHead;
+
+  // Fetch designer assignments for all projects
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      const projectIds = projects.map(p => p.id);
+      if (projectIds.length === 0) return;
+
+      const { data } = await supabase
+        .from('project_team')
+        .select('project_id, assigned_at')
+        .in('project_id', projectIds)
+        .eq('role', 'designer');
+
+      if (data) {
+        const assignments: Record<string, string> = {};
+        data.forEach(d => {
+          assignments[d.project_id] = d.assigned_at;
+        });
+        setProjectAssignments(assignments);
+      }
+    };
+
+    fetchAssignments();
+  }, [projects]);
 
   // Group tasks by project
   const projectsWithTasks = useMemo(() => {
@@ -47,15 +121,20 @@ const DesignTasks: React.FC = () => {
       const project = projects.find(p => p.id === projectId);
       const completed = tasks.filter(t => t.status === 'completed').length;
       const totalTasks = 36; // 36 design tasks per project
+      const assignedAt = projectAssignments[projectId];
+      const daysLeft = assignedAt ? getDesignDaysLeft(assignedAt) : null;
+      
       return {
         id: projectId,
         clientName: project?.client_name || 'Unknown',
         progress: Math.round((completed / totalTasks) * 100),
         tasks: tasks.sort((a, b) => a.order_index - b.order_index),
         totalTasks,
+        daysLeft,
+        timeProgress: daysLeft !== null ? Math.min(100, Math.max(0, ((DESIGN_DEADLINE_DAYS - daysLeft) / DESIGN_DEADLINE_DAYS) * 100)) : 0,
       };
     });
-  }, [allTasks, projects]);
+  }, [allTasks, projects, projectAssignments]);
 
   // Filter based on search
   const filteredProjects = projectsWithTasks.filter(p =>
@@ -205,11 +284,33 @@ const DesignTasks: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
+            <div className="flex items-center gap-6">
+              {/* Timeline indicator */}
+              {project.daysLeft !== null && (
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap",
+                    getTimelineDisplay(project.daysLeft)?.className
+                  )}>
+                    {project.daysLeft <= 5 ? (
+                      <AlertTriangle className="w-3 h-3" />
+                    ) : (
+                      <Timer className="w-3 h-3" />
+                    )}
+                    {getTimelineDisplay(project.daysLeft)?.text}
+                  </div>
+                  <Progress 
+                    value={project.timeProgress} 
+                    className={cn("w-16 h-1.5", getTimelineDisplay(project.daysLeft)?.progressClass)}
+                  />
+                </div>
+              )}
+              
+              {/* Task progress */}
+              <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold text-primary">{project.progress}%</span>
+                <Progress value={project.progress} className="w-24" />
               </div>
-              <Progress value={project.progress} className="w-32" />
             </div>
           </div>
         </CardHeader>
