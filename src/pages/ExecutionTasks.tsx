@@ -14,7 +14,9 @@ import {
   Calendar,
   Loader2,
   Timer,
-  AlertTriangle
+  AlertTriangle,
+  Zap,
+  Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAllExecutionTasks } from '@/hooks/useProjectTasks';
@@ -24,15 +26,24 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { TaskFileUpload } from '@/components/tasks/TaskFileUpload';
 import { FileApprovalSection } from '@/components/approvals/FileApprovalSection';
 import { getProjectStagesInfo, StageInfo, EXECUTION_STAGES, getStageForTask } from '@/utils/executionStages';
+import { CreateUrgentTaskDialog } from '@/components/tasks/CreateUrgentTaskDialog';
+import { UrgentTasksList } from '@/components/tasks/UrgentTasksList';
+import { useMyUrgentTasks } from '@/hooks/useUrgentTasks';
 
 const ExecutionTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
   const [expandedStages, setExpandedStages] = useState<string[]>([]);
+  const [urgentTaskDialog, setUrgentTaskDialog] = useState<{ open: boolean; projectId: string; projectName: string }>({
+    open: false,
+    projectId: '',
+    projectName: '',
+  });
   const { user, role } = useAuth();
   const { isAdmin, isExecutionManager } = useUserRole();
   const { projects, isLoading: projectsLoading } = useProjects();
   const { tasks: allTasks, isLoading: tasksLoading, updateTask } = useAllExecutionTasks();
+  const { tasks: myUrgentTasks } = useMyUrgentTasks();
   const canApproveFiles = isAdmin || isExecutionManager;
 
   // Group tasks by project with stage info
@@ -295,6 +306,24 @@ const ExecutionTasks: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-warning/50 text-warning hover:bg-warning/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setUrgentTaskDialog({
+                      open: true,
+                      projectId: project.id,
+                      projectName: project.clientName,
+                    });
+                  }}
+                >
+                  <Zap className="w-3 h-3 mr-1" />
+                  Urgent Task
+                </Button>
+              )}
               <div className="text-right">
                 <span className="text-lg font-semibold text-primary">{project.progress}%</span>
               </div>
@@ -304,10 +333,16 @@ const ExecutionTasks: React.FC = () => {
         </CardHeader>
         
         {expandedProjects.includes(project.id) && (
-          <CardContent className="pt-0 space-y-3">
-            {project.stagesInfo.map((stageInfo, stageIndex) => 
-              renderStageCard(stageInfo, project.id, stageIndex)
-            )}
+          <CardContent className="pt-0 space-y-4">
+            {/* Urgent Tasks for this project */}
+            {isAdmin && <UrgentTasksList projectId={project.id} compact />}
+            
+            {/* Stage cards */}
+            <div className="space-y-3">
+              {project.stagesInfo.map((stageInfo, stageIndex) => 
+                renderStageCard(stageInfo, project.id, stageIndex)
+              )}
+            </div>
           </CardContent>
         )}
       </Card>
@@ -320,7 +355,7 @@ const ExecutionTasks: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">Execution Tasks</h1>
-          <p className="text-muted-foreground mt-1">Track site work progress across 5 stages</p>
+          <p className="text-muted-foreground mt-1">Track site work progress across 6 stages</p>
         </div>
         
         {/* Stage Legend */}
@@ -333,6 +368,11 @@ const ExecutionTasks: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* My Urgent Tasks - for non-admin users */}
+      {!isAdmin && myUrgentTasks.length > 0 && (
+        <UrgentTasksList showProjectName />
+      )}
 
       {canApproveFiles ? (
         <Tabs defaultValue="tasks" className="space-y-4">
@@ -394,6 +434,14 @@ const ExecutionTasks: React.FC = () => {
           )}
         </>
       )}
+
+      {/* Urgent Task Dialog */}
+      <CreateUrgentTaskDialog
+        open={urgentTaskDialog.open}
+        onOpenChange={(open) => setUrgentTaskDialog(prev => ({ ...prev, open }))}
+        projectId={urgentTaskDialog.projectId}
+        projectName={urgentTaskDialog.projectName}
+      />
     </div>
   );
 };
