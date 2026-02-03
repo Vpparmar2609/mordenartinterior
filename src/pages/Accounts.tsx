@@ -7,13 +7,10 @@ import { useProjectPayments, stageLabels, PaymentStage, PaymentStageData } from 
 import { useUserRole } from '@/hooks/useUserRole';
 import { 
   IndianRupee, 
-  TrendingUp, 
-  TrendingDown, 
   Search,
   ChevronDown,
   ChevronUp,
   Plus,
-  FileText,
   Loader2,
   History
 } from 'lucide-react';
@@ -132,56 +129,6 @@ const Accounts: React.FC = () => {
         <p className="text-muted-foreground mt-1">Track project payments and financials</p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Received</p>
-                <p className="text-2xl font-bold text-success mt-1">
-                  {formatCurrency(totals.totalReceived)}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-success/10">
-                <TrendingUp className="w-6 h-6 text-success" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Pending</p>
-                <p className="text-2xl font-bold text-warning mt-1">
-                  {formatCurrency(totals.totalPending)}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-warning/10">
-                <TrendingDown className="w-6 h-6 text-warning" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Extra Work Total</p>
-                <p className="text-2xl font-bold text-primary mt-1">
-                  {formatCurrency(totals.extraWorkTotal)}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-primary/10">
-                <FileText className="w-6 h-6 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Search */}
       <div className="relative max-w-md">
