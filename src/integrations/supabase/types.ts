@@ -971,6 +971,16 @@ export type Database = {
         Returns: boolean
       }
       bootstrap_first_admin: { Args: never; Returns: boolean }
+      create_system_notification: {
+        Args: {
+          _link?: string
+          _message: string
+          _title: string
+          _type: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
