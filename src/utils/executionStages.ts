@@ -63,11 +63,13 @@ export function calculateStageInfo(
   // Check if all tasks in this stage are completed
   const isCompleted = stageTasks.length > 0 && stageTasks.every(t => t.status === 'completed');
   
-  // Find when the stage was completed (latest completed_date of all tasks in stage)
+  // Find when the stage was completed (latest completed_date or updated_at of all tasks in stage)
   const completedAt = isCompleted 
     ? stageTasks.reduce((latest, task) => {
-        if (!task.completed_date) return latest;
-        const taskDate = new Date(task.completed_date);
+        // Use completed_date if available, otherwise use updated_at as fallback
+        const dateStr = task.completed_date || task.updated_at;
+        if (!dateStr) return latest;
+        const taskDate = new Date(dateStr);
         return !latest || taskDate > latest ? taskDate : latest;
       }, null as Date | null)
     : null;

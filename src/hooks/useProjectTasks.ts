@@ -227,9 +227,17 @@ export const useAllExecutionTasks = () => {
 
   const updateTask = useMutation({
     mutationFn: async ({ id, status, projectId }: { id: string; status: TaskStatus; projectId?: string }) => {
+      const now = new Date().toISOString();
+      const updateData: Record<string, any> = { 
+        status, 
+        updated_at: now,
+        // Set completed_date when completing, clear it when un-completing
+        completed_date: status === 'completed' ? now : null,
+      };
+      
       const { data, error } = await supabase
         .from('execution_tasks')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq('id', id)
         .select();
 

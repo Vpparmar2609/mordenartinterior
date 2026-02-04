@@ -251,7 +251,7 @@ export const useProjectStats = () => {
 
   const stats = {
     total: projects.length,
-    active: projects.filter(p => !['completed', 'lead'].includes(p.status)).length,
+    active: projects.filter(p => p.status !== 'completed' && p.lifecycle_status === 'active').length,
     designPending: projects.filter(p => p.status.includes('design')).length,
     inExecution: projects.filter(p => ['execution_started', 'work_in_progress', 'finishing'].includes(p.status)).length,
     nearCompletion: projects.filter(p => p.progress >= 80 && p.status !== 'completed').length,
