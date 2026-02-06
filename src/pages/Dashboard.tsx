@@ -1,6 +1,9 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { roleLabels } from '@/types/auth';
+import { SplineScene } from '@/components/ui/splite';
+import { Card } from '@/components/ui/card';
+import { Spotlight } from '@/components/ui/spotlight';
 
 // Unified dashboard for most roles
 import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
@@ -45,17 +48,32 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">
-            {getGreeting()}, {profile?.name || 'User'}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {role ? roleLabels[role] : 'Team Member'} • {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
+      {/* 3D Hero Section */}
+      <Card className="w-full overflow-hidden relative min-h-[300px] md:min-h-[400px]">
+        <Spotlight
+          className="-top-40 left-0 md:left-60 md:-top-20"
+          fill="hsl(var(--primary))"
+        />
+        <div className="flex flex-col md:flex-row h-full">
+          {/* Left content */}
+          <div className="flex-1 p-6 md:p-10 relative z-10 flex flex-col justify-center">
+            <h1 className="text-3xl md:text-4xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-b from-foreground to-muted-foreground">
+              {getGreeting()}, {profile?.name || 'User'}
+            </h1>
+            <p className="text-muted-foreground mt-3 text-sm md:text-base max-w-lg">
+              {role ? roleLabels[role] : 'Team Member'} • {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          </div>
+
+          {/* Right 3D content */}
+          <div className="flex-1 relative min-h-[200px] md:min-h-[300px]">
+            <SplineScene 
+              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+              className="w-full h-full"
+            />
+          </div>
         </div>
-      </div>
+      </Card>
 
       {/* Role-specific content */}
       {renderDashboard()}
