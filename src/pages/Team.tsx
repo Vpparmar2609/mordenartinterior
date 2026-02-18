@@ -22,7 +22,10 @@ import {
   AlertCircle,
   Plus,
   Trash2,
-  Loader2
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Settings2,
 } from 'lucide-react';
 import {
   Select,
@@ -67,10 +70,20 @@ const Team: React.FC = () => {
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const { users, isLoading, assignRole, removeUserRole, refetch } = useUsers();
   const { role: currentUserRole } = useAuth();
 
   const isAdmin = currentUserRole === 'admin';
+
+  const toggleCard = (id: string) => {
+    setExpandedCards(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const filteredMembers = users.filter((member) => {
     const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -177,110 +190,125 @@ const Team: React.FC = () => {
         ))}
       </div>
 
-      {/* Team List - mobile-first card layout */}
+      {/* Team List */}
       <div className="space-y-3">
-        {sortedMembers.map((member, index) => (
-          <Card 
-            key={member.id} 
-            className={`glass-card animate-fade-in ${!member.role ? 'border-warning/50' : ''}`}
-            style={{ animationDelay: `${index * 30}ms` }}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Avatar className={`h-11 w-11 shrink-0 ${member.role ? 'bg-gradient-warm' : 'bg-muted'}`}>
-                  <AvatarFallback className="bg-transparent text-primary-foreground font-medium text-sm">
-                    {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-medium text-foreground text-sm truncate">{member.name}</h3>
-                    {member.role ? (
-                      <Badge variant="outline" className="text-xs gap-1 shrink-0">
-                        {roleIcons[member.role]}
-                        {roleLabels[member.role]}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs gap-1 shrink-0 border-warning text-warning">
-                        <Shield className="w-3 h-3" />
-                        No Role
-                      </Badge>
+        {sortedMembers.map((member, index) => {
+          const isExpanded = expandedCards.has(member.id);
+          return (
+            <Card 
+              key={member.id} 
+              className={`glass-card animate-fade-in ${!member.role ? 'border-warning/50' : ''}`}
+              style={{ animationDelay: `${index * 30}ms` }}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className={`h-11 w-11 shrink-0 ${member.role ? 'bg-gradient-warm' : 'bg-muted'}`}>
+                    <AvatarFallback className="bg-transparent text-primary-foreground font-medium text-sm">
+                      {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-medium text-foreground text-sm truncate">{member.name}</h3>
+                      {member.role ? (
+                        <Badge variant="outline" className="text-xs gap-1 shrink-0">
+                          {roleIcons[member.role]}
+                          {roleLabels[member.role]}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs gap-1 shrink-0 border-warning text-warning">
+                          <Shield className="w-3 h-3" />
+                          No Role
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 text-muted-foreground mt-0.5">
+                      <Mail className="w-3 h-3 shrink-0" />
+                      <span className="text-xs truncate">{member.email}</span>
+                    </div>
+                    {member.phone && (
+                      <div className="flex items-center gap-1 text-muted-foreground mt-0.5">
+                        <Phone className="w-3 h-3 shrink-0" />
+                        <span className="text-xs">{member.phone}</span>
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 text-muted-foreground mt-0.5">
-                    <Mail className="w-3 h-3 shrink-0" />
-                    <span className="text-xs truncate">{member.email}</span>
-                  </div>
-                  {member.phone && (
-                    <div className="flex items-center gap-1 text-muted-foreground mt-0.5">
-                      <Phone className="w-3 h-3 shrink-0" />
-                      <span className="text-xs">{member.phone}</span>
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              {/* Admin controls */}
-              {isAdmin && (
-                <div className="mt-3 pt-3 border-t border-border flex gap-2">
-                  <Select
-                    value={member.role || ''}
-                    onValueChange={(value) => handleRoleAssign(member.id, value as UserRole)}
+                {/* Admin toggle button */}
+                {isAdmin && (
+                  <button
+                    onClick={() => toggleCard(member.id)}
+                    className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors pt-2 border-t border-border"
                   >
-                    <SelectTrigger className="flex-1 h-8 text-xs">
-                      <SelectValue placeholder="Assign role..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allRoles.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          <div className="flex items-center gap-2 text-xs">
-                            {roleIcons[role]}
-                            {roleLabels[role]}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Settings2 className="w-3 h-3" />
+                    Manage
+                    {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                )}
 
-                  {member.role && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          {removingUserId === member.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-3 h-3" />
-                          )}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="mx-4">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remove user role?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will remove {member.name}'s role. They'll lose access until reassigned.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleRemoveUser(member.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                {/* Admin controls - collapsible */}
+                {isAdmin && isExpanded && (
+                  <div className="mt-3 flex gap-2">
+                    <Select
+                      value={member.role || ''}
+                      onValueChange={(value) => handleRoleAssign(member.id, value as UserRole)}
+                    >
+                      <SelectTrigger className="flex-1 h-8 text-xs bg-background">
+                        <SelectValue placeholder="Assign role..." />
+                      </SelectTrigger>
+                      <SelectContent className="z-50 bg-background border border-border shadow-lg">
+                        {allRoles.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            <div className="flex items-center gap-2 text-xs">
+                              {roleIcons[role]}
+                              {roleLabels[role]}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {member.role && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
-                            Remove
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                            {removingUserId === member.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3 h-3" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="mx-4">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove user role?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will remove {member.name}'s role. They'll lose access until reassigned.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleRemoveUser(member.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {sortedMembers.length === 0 && (
