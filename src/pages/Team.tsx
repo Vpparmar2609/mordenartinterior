@@ -120,16 +120,18 @@ const Team: React.FC = () => {
   const pendingUsers = users.filter(u => !u.role);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 animate-fade-in pb-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">Team Management</h1>
-          <p className="text-muted-foreground mt-1">Manage users and their roles</p>
+          <h1 className="text-xl md:text-3xl font-display font-semibold text-foreground">Team</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            {users.length} member{users.length !== 1 ? 's' : ''}
+          </p>
         </div>
         {isAdmin && (
-          <Button onClick={() => setCreateUserOpen(true)} className="bg-gradient-warm">
-            <Plus className="w-4 h-4 mr-2" />
+          <Button onClick={() => setCreateUserOpen(true)} size="sm" className="bg-gradient-warm">
+            <Plus className="w-4 h-4 mr-1" />
             Add User
           </Button>
         )}
@@ -138,141 +140,128 @@ const Team: React.FC = () => {
       {/* Pending Role Assignments Alert */}
       {isAdmin && pendingUsers.length > 0 && (
         <Card className="border-warning/50 bg-warning/5">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-medium text-foreground">Pending Role Assignments</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {pendingUsers.length} user(s) are waiting for role assignment. Assign roles below to grant them access.
-                </p>
-              </div>
+          <CardContent className="p-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{pendingUsers.length} user(s)</span> waiting for role assignment.
+              </p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {roles.map((role) => (
-            <Button
-              key={role}
-              size="sm"
-              variant={selectedRoleFilter === role ? 'default' : 'outline'}
-              onClick={() => setSelectedRoleFilter(role)}
-              className={selectedRoleFilter === role ? 'bg-gradient-warm' : ''}
-            >
-              {role === 'all' ? 'All' : roleLabels[role]}
-            </Button>
-          ))}
-        </div>
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
-      {/* Team Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Role Filter - horizontal scroll on mobile */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {roles.map((role) => (
+          <Button
+            key={role}
+            size="sm"
+            variant={selectedRoleFilter === role ? 'default' : 'outline'}
+            onClick={() => setSelectedRoleFilter(role)}
+            className={`shrink-0 text-xs ${selectedRoleFilter === role ? 'bg-gradient-warm' : ''}`}
+          >
+            {role === 'all' ? 'All' : roleLabels[role]}
+          </Button>
+        ))}
+      </div>
+
+      {/* Team List - mobile-first card layout */}
+      <div className="space-y-3">
         {sortedMembers.map((member, index) => (
           <Card 
             key={member.id} 
             className={`glass-card animate-fade-in ${!member.role ? 'border-warning/50' : ''}`}
-            style={{ animationDelay: `${index * 50}ms` }}
+            style={{ animationDelay: `${index * 30}ms` }}
           >
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className={`h-12 w-12 ${member.role ? 'bg-gradient-warm' : 'bg-muted'}`}>
-                    <AvatarFallback className="bg-transparent text-primary-foreground font-medium">
-                      {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-medium text-foreground">{member.name}</h3>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Avatar className={`h-11 w-11 shrink-0 ${member.role ? 'bg-gradient-warm' : 'bg-muted'}`}>
+                  <AvatarFallback className="bg-transparent text-primary-foreground font-medium text-sm">
+                    {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-medium text-foreground text-sm truncate">{member.name}</h3>
                     {member.role ? (
-                      <Badge variant="outline" className="mt-1 text-xs gap-1">
+                      <Badge variant="outline" className="text-xs gap-1 shrink-0">
                         {roleIcons[member.role]}
                         {roleLabels[member.role]}
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="mt-1 text-xs gap-1 border-warning text-warning">
+                      <Badge variant="outline" className="text-xs gap-1 shrink-0 border-warning text-warning">
                         <Shield className="w-3 h-3" />
-                        No Role Assigned
+                        No Role
                       </Badge>
                     )}
                   </div>
-                </div>
-              </div>
-              
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="w-4 h-4" />
-                  <span className="truncate">{member.email}</span>
-                </div>
-                {member.phone && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="w-4 h-4" />
-                    {member.phone}
+                  <div className="flex items-center gap-1 text-muted-foreground mt-0.5">
+                    <Mail className="w-3 h-3 shrink-0" />
+                    <span className="text-xs truncate">{member.email}</span>
                   </div>
-                )}
+                  {member.phone && (
+                    <div className="flex items-center gap-1 text-muted-foreground mt-0.5">
+                      <Phone className="w-3 h-3 shrink-0" />
+                      <span className="text-xs">{member.phone}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              
-              {/* Role Assignment (Admin Only) */}
+
+              {/* Admin controls */}
               {isAdmin && (
-                <div className="mt-4 pt-4 border-t border-border space-y-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-2 block">
-                      {member.role ? 'Change Role' : 'Assign Role'}
-                    </label>
-                    <Select
-                      value={member.role || ''}
-                      onValueChange={(value) => handleRoleAssign(member.id, value as UserRole)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a role..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allRoles.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            <div className="flex items-center gap-2">
-                              {roleIcons[role]}
-                              {roleLabels[role]}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {/* Remove Role Button */}
+                <div className="mt-3 pt-3 border-t border-border flex gap-2">
+                  <Select
+                    value={member.role || ''}
+                    onValueChange={(value) => handleRoleAssign(member.id, value as UserRole)}
+                  >
+                    <SelectTrigger className="flex-1 h-8 text-xs">
+                      <SelectValue placeholder="Assign role..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allRoles.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          <div className="flex items-center gap-2 text-xs">
+                            {roleIcons[role]}
+                            {roleLabels[role]}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   {member.role && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button 
                           variant="outline" 
-                          size="sm" 
-                          className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                          size="sm"
+                          className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           {removingUserId === member.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            <Loader2 className="w-3 h-3 animate-spin" />
                           ) : (
-                            <Trash2 className="w-4 h-4 mr-2" />
+                            <Trash2 className="w-3 h-3" />
                           )}
-                          Remove Role
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="mx-4">
                         <AlertDialogHeader>
                           <AlertDialogTitle>Remove user role?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will remove the role from {member.name}. They will lose access to the app until a new role is assigned.
+                            This will remove {member.name}'s role. They'll lose access until reassigned.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -281,7 +270,7 @@ const Team: React.FC = () => {
                             onClick={() => handleRemoveUser(member.id)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
-                            Remove Role
+                            Remove
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
