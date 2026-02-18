@@ -223,7 +223,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input
-                        type="text"
+                        type="password"
                         placeholder="Secure password"
                         {...field}
                       />
