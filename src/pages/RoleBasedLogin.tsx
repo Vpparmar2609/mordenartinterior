@@ -12,7 +12,6 @@ import {
   Lock,
   ArrowRight,
   ArrowLeft,
-  User,
   AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -33,11 +32,9 @@ const RoleBasedLogin: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);
   
-  const { signIn, signUp, isLoading, isAuthenticated, role, profile } = useAuth();
+  const { signIn, isLoading, isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated (with or without role)
@@ -73,30 +70,15 @@ const RoleBasedLogin: React.FC = () => {
     e.preventDefault();
     setRoleError(null);
     
-    if (isSignUp) {
-      const { error } = await signUp(email, password, name);
-      if (error) {
-        if (error.message.includes('already registered')) {
-          toast.error('This email is already registered. Please sign in instead.');
-        } else {
-          toast.error(error.message);
-        }
+    const { error } = await signIn(email, password);
+    if (error) {
+      if (error.message.includes('Invalid login credentials')) {
+        toast.error('Invalid email or password');
       } else {
-        toast.success('Account created! An admin will assign your role.');
-        navigate('/dashboard');
+        toast.error(error.message);
       }
     } else {
-      const { error } = await signIn(email, password);
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast.error('Invalid email or password');
-        } else {
-          toast.error(error.message);
-        }
-      } else {
-        // Role verification will happen after auth state updates
-        toast.success(`Welcome! Logging in as ${roleLabels[selectedRole!]}`);
-      }
+      toast.success(`Welcome! Logging in as ${roleLabels[selectedRole!]}`);
     }
   };
 
@@ -194,7 +176,7 @@ const RoleBasedLogin: React.FC = () => {
                   </Button>
                   <div>
                     <h2 className="text-xl font-display font-semibold text-foreground">
-                      {isSignUp ? 'Create Account' : 'Sign In'}
+                      Sign In
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       as {selectedRole && roleLabels[selectedRole]}
@@ -210,23 +192,6 @@ const RoleBasedLogin: React.FC = () => {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {isSignUp && (
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-foreground">Full Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          id="name"
-                          type="text"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          placeholder="Your full name"
-                          className="pl-10 bg-card/60 border-border/50 focus:border-primary/50"
-                          required
-                        />
-                      </div>
-                    </div>
-                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-foreground">Email</Label>
@@ -268,27 +233,8 @@ const RoleBasedLogin: React.FC = () => {
                     className="w-full bg-gradient-warm hover:opacity-90" 
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
+                    {isLoading ? 'Please wait...' : 'Sign In'}
                   </Button>
-
-                  <div className="text-center">
-                    <button
-                      type="button"
-                      onClick={() => setIsSignUp(!isSignUp)}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {isSignUp 
-                        ? 'Already have an account? Sign In' 
-                        : "Don't have an account? Sign Up"}
-                    </button>
-                  </div>
-
-                  {isSignUp && (
-                    <p className="text-xs text-center text-muted-foreground">
-                      Note: New accounts need role assignment by an admin.
-                      The first user automatically becomes Admin.
-                    </p>
-                  )}
                 </form>
               </>
             )}
