@@ -8,6 +8,77 @@ import { Spotlight } from '@/components/ui/spotlight';
 // Unified dashboard for most roles
 import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return { greeting: 'Good morning', emoji: '🌅' };
+  if (hour >= 12 && hour < 17) return { greeting: 'Good afternoon', emoji: '☀️' };
+  if (hour >= 17 && hour < 21) return { greeting: 'Good evening', emoji: '🌇' };
+  return { greeting: 'Good night', emoji: '🌙' };
+};
+
+const getMotivationalMessage = (role: string | null) => {
+  const hour = new Date().getHours();
+  const day = new Date().getDay(); // 0=Sun, 6=Sat
+
+  if (day === 0 || day === 6) {
+    return "Even the best take time to recharge. Enjoy your weekend — great work deserves great rest. 🌿";
+  }
+
+  const messages: Record<string, string[]> = {
+    admin: [
+      "Your vision drives the whole team forward. Lead with clarity today.",
+      "Great leaders don't just manage projects — they build dreams. Keep going.",
+      "Every decision you make today shapes tomorrow's success. Trust your instincts.",
+      "The best teams are built by leaders who care. Your work matters.",
+    ],
+    design_head: [
+      "Creativity is intelligence having fun. Push the boundaries of design today.",
+      "Your eye for detail turns spaces into stories. Every pixel counts.",
+      "Design isn't just about looks — it's about creating experiences people love.",
+      "Guide your team's creativity with confidence. The best designs start with you.",
+    ],
+    designer: [
+      "Every blank canvas is an opportunity to create something extraordinary.",
+      "Your designs are transforming spaces and changing lives — keep creating.",
+      "The details are what make design unforgettable. You've got this.",
+      "A great designer sees potential where others see empty space.",
+    ],
+    execution_manager: [
+      "Excellence in execution is what turns great plans into reality.",
+      "Your leadership on-site keeps everything moving forward. The team counts on you.",
+      "Every project completed is a testament to your dedication and skill.",
+      "Manage with precision, lead with purpose. Today is yours to own.",
+    ],
+    site_supervisor: [
+      "You're the eyes and hands that make every project come alive on-site.",
+      "Attention to detail on-site today means a perfect project tomorrow.",
+      "Your work transforms blueprints into beautiful spaces people will love.",
+      "Every brick laid under your watch is a step toward something amazing.",
+    ],
+    account_manager: [
+      "Numbers tell stories — and you make sure every story has a happy ending.",
+      "Your financial oversight keeps the whole machine running smoothly.",
+      "Accuracy and trust are your superpowers. Keep up the great work.",
+      "Behind every successful project is an account manager who never misses a beat.",
+    ],
+    client: [
+      "Your dream home is becoming reality. Exciting times ahead!",
+      "Great things are being built for you. Stay inspired!",
+      "Your vision is in expert hands. Watch the magic unfold.",
+    ],
+  };
+
+  const pool = messages[role || ''] || [
+    "Today is a fresh opportunity to do great work. Make it count.",
+    "Show up, give your best, and let results speak for themselves.",
+    "Every day is a chance to build something you're proud of.",
+  ];
+
+  // Rotate based on date so it changes daily
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  return pool[dayOfYear % pool.length];
+};
+
 const Dashboard: React.FC = () => {
   const { profile, role, isLoading } = useAuth();
 
@@ -19,12 +90,8 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  };
+  const { greeting, emoji } = getGreeting();
+  const motivationalMessage = getMotivationalMessage(role);
 
   const renderDashboard = () => {
     if (!role) {
@@ -42,14 +109,13 @@ const Dashboard: React.FC = () => {
       );
     }
     
-    // All roles use the unified AdminDashboard
     return <AdminDashboard />;
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* 3D Hero Section */}
-      <Card className="w-full overflow-hidden relative min-h-[300px] md:min-h-[400px]">
+      {/* Fancy Motivational Hero */}
+      <Card className="w-full overflow-hidden relative min-h-[280px] md:min-h-[360px]">
         <Spotlight
           className="-top-40 left-0 md:left-60 md:-top-20"
           fill="hsl(var(--primary))"
@@ -57,16 +123,46 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col md:flex-row h-full">
           {/* Left content */}
           <div className="flex-1 p-6 md:p-10 relative z-10 flex flex-col justify-center">
-            <h1 className="text-3xl md:text-4xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-b from-foreground to-muted-foreground">
-              {getGreeting()}, {profile?.name || 'User'}
+            {/* Emoji + time-of-day chip */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">{emoji}</span>
+              <span className="text-xs font-medium px-3 py-1 rounded-full bg-primary/15 text-primary border border-primary/20">
+                {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+
+            {/* Main greeting */}
+            <h1 className="text-3xl md:text-5xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground via-foreground/90 to-muted-foreground leading-tight">
+              {greeting},<br />
+              <span className="text-primary">{profile?.name?.split(' ')[0] || 'there'}</span>
             </h1>
-            <p className="text-muted-foreground mt-3 text-sm md:text-base max-w-lg">
-              {role ? roleLabels[role] : 'Team Member'} • {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
+
+            {/* Role badge */}
+            <div className="flex items-center gap-2 mt-3">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+                {role ? roleLabels[role] : 'Team Member'}
+              </span>
+            </div>
+
+            {/* Motivational quote with decorative line */}
+            <div className="mt-5 relative">
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary to-primary/0 rounded-full" />
+              <p className="pl-4 text-sm md:text-base text-muted-foreground italic leading-relaxed max-w-md">
+                {motivationalMessage}
+              </p>
+            </div>
+
+            {/* Time display */}
+            <div className="mt-6 flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
+                <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                You're on time
+              </div>
+            </div>
           </div>
 
           {/* Right 3D content */}
-          <div className="flex-1 relative min-h-[200px] md:min-h-[300px]">
+          <div className="flex-1 relative min-h-[180px] md:min-h-[280px]">
             <SplineScene 
               scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
               className="w-full h-full"
