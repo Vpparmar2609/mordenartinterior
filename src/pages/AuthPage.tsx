@@ -23,7 +23,6 @@ const roleIcons: Record<UserRole, React.ReactNode> = {
   admin: <Crown className="w-5 h-5" />,
   design_head: <Palette className="w-5 h-5" />,
   designer: <PenTool className="w-5 h-5" />,
-  execution_head: <Users className="w-5 h-5" />,
   execution_manager: <Users className="w-5 h-5" />,
   site_supervisor: <ClipboardCheck className="w-5 h-5" />,
   account_manager: <Calculator className="w-5 h-5" />,
