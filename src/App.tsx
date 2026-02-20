@@ -12,13 +12,13 @@ import ProjectDetail from "./pages/ProjectDetail";
 import Team from "./pages/Team";
 import DesignTasks from "./pages/DesignTasks";
 import ExecutionTasks from "./pages/ExecutionTasks";
-import DailyReports from "./pages/DailyReports";
 import Issues from "./pages/Issues";
 import Approvals from "./pages/Approvals";
 import Messages from "./pages/Messages";
 import Documents from "./pages/Documents";
 import Notifications from "./pages/Notifications";
 import Accounts from "./pages/Accounts";
+import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,13 +60,13 @@ const App = () => (
               <Route path="/team" element={<Team />} />
               <Route path="/design-tasks" element={<DesignTasks />} />
               <Route path="/execution-tasks" element={<ExecutionTasks />} />
-              <Route path="/daily-reports" element={<DailyReports />} />
               <Route path="/issues" element={<Issues />} />
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/documents" element={<Documents />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
             
             {/* Catch all */}
@@ -79,3 +79,4 @@ const App = () => (
 );
 
 export default App;
+

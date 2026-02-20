@@ -14,10 +14,8 @@ import {
   FileText,
   Settings,
   LogOut,
-  ClipboardList,
   CheckSquare,
   AlertTriangle,
-  BarChart3,
   Building2,
   Bell,
   IndianRupee,
@@ -65,12 +63,6 @@ const navItems: NavItem[] = [
     roles: ['admin', 'execution_manager', 'site_supervisor'],
   },
   {
-    icon: <ClipboardList className="w-5 h-5" />,
-    label: 'Daily Reports',
-    href: '/daily-reports',
-    roles: ['admin', 'execution_manager', 'site_supervisor'],
-  },
-  {
     icon: <AlertTriangle className="w-5 h-5" />,
     label: 'Issues',
     href: '/issues',
@@ -105,12 +97,6 @@ const navItems: NavItem[] = [
     label: 'Notifications',
     href: '/notifications',
     roles: ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor', 'account_manager'],
-  },
-  {
-    icon: <BarChart3 className="w-5 h-5" />,
-    label: 'Analytics',
-    href: '/analytics',
-    roles: ['admin'],
   },
   {
     icon: <Settings className="w-5 h-5" />,
