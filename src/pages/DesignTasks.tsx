@@ -124,14 +124,19 @@ const DesignTasks: React.FC = () => {
       const assignedAt = projectAssignments[projectId];
       const daysLeft = assignedAt ? getDesignDaysLeft(assignedAt) : null;
       
+      const progressPct = Math.round((completed / totalTasks) * 100);
+      const allDone = completed === totalTasks;
+
       return {
         id: projectId,
         clientName: project?.client_name || 'Unknown',
-        progress: Math.round((completed / totalTasks) * 100),
+        progress: progressPct,
         tasks: tasks.sort((a, b) => a.order_index - b.order_index),
         totalTasks,
-        daysLeft,
-        timeProgress: daysLeft !== null ? Math.min(100, Math.max(0, ((DESIGN_DEADLINE_DAYS - daysLeft) / DESIGN_DEADLINE_DAYS) * 100)) : 0,
+        // Freeze timeline when all tasks are completed
+        daysLeft: allDone ? null : daysLeft,
+        allDone,
+        timeProgress: daysLeft !== null && !allDone ? Math.min(100, Math.max(0, ((DESIGN_DEADLINE_DAYS - daysLeft) / DESIGN_DEADLINE_DAYS) * 100)) : 0,
       };
     });
   }, [allTasks, projects, projectAssignments]);
@@ -286,7 +291,12 @@ const DesignTasks: React.FC = () => {
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               {/* Timeline indicator */}
-              {project.daysLeft !== null && (
+              {project.allDone ? (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-success/10 text-success">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Design Complete
+                </div>
+              ) : project.daysLeft !== null ? (
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap",
@@ -304,7 +314,7 @@ const DesignTasks: React.FC = () => {
                     className={cn("w-12 h-1.5", getTimelineDisplay(project.daysLeft)?.progressClass)}
                   />
                 </div>
-              )}
+              ) : null}
               {/* Task progress */}
               <div className="flex items-center gap-2">
                 <span className="text-base font-semibold text-primary">{project.progress}%</span>
