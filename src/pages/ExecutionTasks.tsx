@@ -203,27 +203,29 @@ const ExecutionTasks: React.FC = () => {
       >
         {/* Stage Header */}
         <div 
-          className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/30 transition-colors"
+          className="flex items-start justify-between p-3 cursor-pointer hover:bg-muted/30 transition-colors gap-2"
           onClick={() => toggleStage(stageKey)}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 min-w-0">
             {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
             )}
-            <div className={cn("w-3 h-3 rounded-full", stageInfo.stage.color)} />
-            <div>
-              <span className="font-medium">{stageInfo.stage.name}</span>
-              <span className="text-sm text-muted-foreground ml-2">
-                ({completedCount}/{totalCount} tasks)
+            <div className={cn("w-3 h-3 rounded-full shrink-0", stageInfo.stage.color)} />
+            <div className="min-w-0">
+              <span className="font-medium text-sm">{stageInfo.stage.name}</span>
+              <span className="text-xs text-muted-foreground ml-1">
+                ({completedCount}/{totalCount})
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-end gap-1 shrink-0">
             {getStageCountdownBadge(stageInfo)}
-            <Progress value={stageProgress} className="w-20 h-2" />
-            <span className="text-sm font-medium w-10 text-right">{stageProgress}%</span>
+            <div className="flex items-center gap-1">
+              <Progress value={stageProgress} className="w-14 h-1.5" />
+              <span className="text-xs font-medium w-8 text-right">{stageProgress}%</span>
+            </div>
           </div>
         </div>
 
@@ -234,21 +236,21 @@ const ExecutionTasks: React.FC = () => {
               <div 
                 key={task.id}
                 className={cn(
-                  "flex items-center justify-between p-2 rounded-lg",
+                  "flex flex-col gap-2 p-2 rounded-lg",
                   task.status === 'completed' ? 'bg-success/5' : 
                   task.status === 'in_progress' ? 'bg-warning/5' : 'bg-muted/20'
                 )}
               >
-                <div className="flex items-center gap-3">
-                  {getStatusIcon(task.status)}
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 shrink-0">{getStatusIcon(task.status)}</div>
                   <span className={cn(
-                    "text-sm",
+                    "text-sm flex-1",
                     task.status === 'completed' && 'text-muted-foreground line-through'
                   )}>
                     {task.order_index}. {task.name}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap pl-6">
                   {task.completed_date && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="w-3 h-3" />
@@ -291,26 +293,26 @@ const ExecutionTasks: React.FC = () => {
           className="cursor-pointer"
           onClick={() => toggleProject(project.id)}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 min-w-0">
               {expandedProjects.includes(project.id) ? (
-                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
               ) : (
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
               )}
-              <div>
-                <CardTitle className="text-lg">{project.clientName}</CardTitle>
+              <div className="min-w-0">
+                <CardTitle className="text-lg truncate">{project.clientName}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   {project.tasks.filter(t => t.status === 'completed').length}/{project.totalTasks} tasks completed
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end gap-2 shrink-0">
               {isAdmin && (
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-warning/50 text-warning hover:bg-warning/10"
+                  className="border-warning/50 text-warning hover:bg-warning/10 text-xs h-7"
                   onClick={(e) => {
                     e.stopPropagation();
                     setUrgentTaskDialog({
@@ -321,13 +323,13 @@ const ExecutionTasks: React.FC = () => {
                   }}
                 >
                   <Zap className="w-3 h-3 mr-1" />
-                  Urgent Task
+                  Urgent
                 </Button>
               )}
-              <div className="text-right">
-                <span className="text-lg font-semibold text-primary">{project.progress}%</span>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold text-primary">{project.progress}%</span>
+                <Progress value={project.progress} className="w-16" />
               </div>
-              <Progress value={project.progress} className="w-32" />
             </div>
           </div>
         </CardHeader>
