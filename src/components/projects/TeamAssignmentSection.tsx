@@ -376,17 +376,17 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
           const canManageDesigners = isAdmin || isDesignHead;
 
           return (
-            <div className="p-4 rounded-lg bg-muted/30 space-y-3">
+            <div className="p-3 rounded-lg bg-muted/30 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-accent"><PenTool className="w-4 h-4" /></span>
-                  <span className="font-medium">Designers</span>
+                  <span className="font-medium text-sm">Designers</span>
                   <Badge variant="secondary" className="text-xs">{assignedDesigners.length}</Badge>
                 </div>
-                {canManageDesigners && !addingDesigner && unassignedDesigners.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => setAddingDesigner(true)}>
-                    <UserPlus className="w-4 h-4 mr-1" />
-                    Add Designer
+                {canManageDesigners && !addingDesigner && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => setAddingDesigner(true)}>
+                    <UserPlus className="w-3 h-3 mr-1" />
+                    Add
                   </Button>
                 )}
               </div>
@@ -397,31 +397,32 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
               ) : (
                 <div className="space-y-2">
                   {assignedDesigners.map(member => (
-                    <div key={member.id} className="flex items-center justify-between pl-2">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-7 w-7 bg-gradient-warm">
-                          <AvatarFallback className="bg-transparent text-xs text-primary-foreground">
-                            {member.profile?.name.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{member.profile?.name}</p>
-                          <p className="text-xs text-muted-foreground">{member.profile?.email}</p>
-                        </div>
-                        {renderWorkloadBadge(member.user_id)}
+                    <div key={member.id} className="flex items-center gap-2 pl-1">
+                      <Avatar className="h-7 w-7 shrink-0 bg-gradient-warm">
+                        <AvatarFallback className="bg-transparent text-xs text-primary-foreground">
+                          {member.profile?.name.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-xs truncate">{member.profile?.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{member.profile?.email}</p>
                       </div>
+                      <Badge variant="outline" className="text-xs gap-1 shrink-0">
+                        <Briefcase className="w-3 h-3" />
+                        {getWorkloadForUser(member.user_id)}
+                      </Badge>
                       {canManageDesigners && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                              <X className="w-4 h-4" />
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0 text-destructive hover:text-destructive">
+                              <X className="w-3.5 h-3.5" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="mx-4">
                             <AlertDialogHeader>
                               <AlertDialogTitle>Remove designer?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will remove {member.profile?.name} from this project. You can reassign them later.
+                                This will remove {member.profile?.name} from this project.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -443,28 +444,31 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
 
               {/* Add designer form */}
               {addingDesigner && (
-                <div className="flex items-center gap-2 pt-1">
-                  <Select value={newDesignerId} onValueChange={setNewDesignerId}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select designer to add..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unassignedDesigners.map(u => (
-                        <SelectItem key={u.id} value={u.id}>
-                          <div className="flex items-center gap-2">
+                <div className="space-y-2 pt-1">
+                  {unassignedDesigners.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">All designers are already assigned to this project.</p>
+                  ) : (
+                    <Select value={newDesignerId} onValueChange={setNewDesignerId}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select designer..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unassignedDesigners.map(u => (
+                          <SelectItem key={u.id} value={u.id}>
                             <span>{u.name}</span>
-                            {renderWorkloadBadge(u.id)}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" onClick={handleAddDesigner} disabled={assignMember.isPending || !newDesignerId}>
-                    {assignMember.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => { setAddingDesigner(false); setNewDesignerId(''); }}>
-                    Cancel
-                  </Button>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <div className="flex gap-2">
+                    <Button size="sm" className="flex-1" onClick={handleAddDesigner} disabled={assignMember.isPending || !newDesignerId}>
+                      {assignMember.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setAddingDesigner(false); setNewDesignerId(''); }}>
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -491,17 +495,17 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
           const canManageSupervisors = isAdmin || isExecutionManager;
 
           return (
-            <div className="p-4 rounded-lg bg-muted/30 space-y-3">
+            <div className="p-3 rounded-lg bg-muted/30 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-accent"><ClipboardCheck className="w-4 h-4" /></span>
-                  <span className="font-medium">Site Supervisors</span>
+                  <span className="font-medium text-sm">Site Supervisors</span>
                   <Badge variant="secondary" className="text-xs">{assignedSupervisors.length}</Badge>
                 </div>
-                {canManageSupervisors && !addingSupervisor && unassignedSupervisors.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => setAddingSupervisor(true)}>
-                    <UserPlus className="w-4 h-4 mr-1" />
-                    Add Supervisor
+                {canManageSupervisors && !addingSupervisor && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => setAddingSupervisor(true)}>
+                    <UserPlus className="w-3 h-3 mr-1" />
+                    Add
                   </Button>
                 )}
               </div>
@@ -511,31 +515,32 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
               ) : (
                 <div className="space-y-2">
                   {assignedSupervisors.map(member => (
-                    <div key={member.id} className="flex items-center justify-between pl-2">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-7 w-7 bg-gradient-warm">
-                          <AvatarFallback className="bg-transparent text-xs text-primary-foreground">
-                            {member.profile?.name.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{member.profile?.name}</p>
-                          <p className="text-xs text-muted-foreground">{member.profile?.email}</p>
-                        </div>
-                        {renderWorkloadBadge(member.user_id)}
+                    <div key={member.id} className="flex items-center gap-2 pl-1">
+                      <Avatar className="h-7 w-7 shrink-0 bg-gradient-warm">
+                        <AvatarFallback className="bg-transparent text-xs text-primary-foreground">
+                          {member.profile?.name.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-xs truncate">{member.profile?.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{member.profile?.email}</p>
                       </div>
+                      <Badge variant="outline" className="text-xs gap-1 shrink-0">
+                        <Briefcase className="w-3 h-3" />
+                        {getWorkloadForUser(member.user_id)}
+                      </Badge>
                       {canManageSupervisors && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                              <X className="w-4 h-4" />
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0 text-destructive hover:text-destructive">
+                              <X className="w-3.5 h-3.5" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="mx-4">
                             <AlertDialogHeader>
                               <AlertDialogTitle>Remove supervisor?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will remove {member.profile?.name} from this project. You can reassign them later.
+                                This will remove {member.profile?.name} from this project.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -556,28 +561,31 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
               )}
 
               {addingSupervisor && (
-                <div className="flex items-center gap-2 pt-1">
-                  <Select value={newSupervisorId} onValueChange={setNewSupervisorId}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select supervisor to add..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unassignedSupervisors.map(u => (
-                        <SelectItem key={u.id} value={u.id}>
-                          <div className="flex items-center gap-2">
+                <div className="space-y-2 pt-1">
+                  {unassignedSupervisors.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">All supervisors are already assigned to this project.</p>
+                  ) : (
+                    <Select value={newSupervisorId} onValueChange={setNewSupervisorId}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select supervisor..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unassignedSupervisors.map(u => (
+                          <SelectItem key={u.id} value={u.id}>
                             <span>{u.name}</span>
-                            {renderWorkloadBadge(u.id)}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" onClick={handleAddSupervisor} disabled={assignMember.isPending || !newSupervisorId}>
-                    {assignMember.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => { setAddingSupervisor(false); setNewSupervisorId(''); }}>
-                    Cancel
-                  </Button>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <div className="flex gap-2">
+                    <Button size="sm" className="flex-1" onClick={handleAddSupervisor} disabled={assignMember.isPending || !newSupervisorId}>
+                      {assignMember.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setAddingSupervisor(false); setNewSupervisorId(''); }}>
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
