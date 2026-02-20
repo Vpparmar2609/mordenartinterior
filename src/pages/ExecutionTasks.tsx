@@ -152,15 +152,15 @@ const ExecutionTasks: React.FC = () => {
       return (
         <Badge className="bg-destructive/20 text-destructive border-0 gap-1 animate-pulse">
           <AlertTriangle className="w-3 h-3" />
-          Overdue!
+          {Math.abs(countdown.daysLeft ?? 0)}d overdue
         </Badge>
       );
     }
     
     // In progress
-    const urgencyClass = countdown.daysLeft <= 3 
+    const urgencyClass = countdown.daysLeft !== null && countdown.daysLeft <= 3
       ? 'bg-destructive/20 text-destructive' 
-      : countdown.daysLeft <= 7 
+      : countdown.daysLeft !== null && countdown.daysLeft <= 7
         ? 'bg-warning/20 text-warning' 
         : 'bg-primary/20 text-primary';
     

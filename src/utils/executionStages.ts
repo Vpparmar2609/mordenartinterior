@@ -105,7 +105,7 @@ export function calculateStageInfo(
     isActive = true;
     startedAt = previousStageInfo.completedAt;
     const daysPassed = Math.floor((Date.now() - startedAt.getTime()) / (1000 * 60 * 60 * 24));
-    daysLeft = Math.max(0, stage.daysAllowed - daysPassed);
+    daysLeft = stage.daysAllowed - daysPassed; // can be negative (overdue)
     status = daysLeft <= 0 ? 'overdue' : 'in_progress';
   }
 
