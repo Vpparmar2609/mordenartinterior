@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { useIssues } from '@/hooks/useIssues';
 import { useProjects } from '@/hooks/useProjects';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -38,11 +39,15 @@ const Issues: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isAdmin, isDesignHead, isExecutionManager } = useUserRole();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [solvingId, setSolvingId] = useState<string | null>(null);
+
+  const canResolveIssues = isAdmin || isDesignHead || isExecutionManager;
 
   // Form state
   const [newIssue, setNewIssue] = useState({
@@ -140,6 +145,37 @@ const Issues: React.FC = () => {
     }
   };
 
+  const handleMarkSolved = async (issueId: string) => {
+    if (!user) return;
+    setSolvingId(issueId);
+    try {
+      const { error } = await supabase
+        .from('issues')
+        .update({
+          status: 'resolved',
+          resolved_at: new Date().toISOString(),
+          resolution_comment: `Resolved by ${user.id}`,
+        })
+        .eq('id', issueId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Issue resolved',
+        description: 'The issue has been marked as solved.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSolvingId(null);
+    }
+  };
+
   const openCount = issues.filter(i => i.status === 'open').length;
   const inProgressCount = issues.filter(i => i.status === 'in_progress').length;
 
@@ -221,30 +257,62 @@ const Issues: React.FC = () => {
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium text-foreground">{issue.project?.client_name || getProjectName(issue.project_id)}</span>
-                      <span className="text-muted-foreground">•</span>
-                      <span className="text-sm text-muted-foreground">{issue.issue_type}</span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className="font-medium text-foreground">{issue.project?.client_name || getProjectName(issue.project_id)}</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-sm text-muted-foreground">{issue.issue_type}</span>
+                      </div>
+                      <p className="text-sm text-foreground mb-3">{issue.description}</p>
+                      <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                        <span>Reported by {issue.reporter?.name || 'Unknown'}</span>
+                        <span>•</span>
+                        <span>{new Date(issue.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                        {issue.assignee && (
+                          <>
+                            <span>•</span>
+                            <span>Assigned to {issue.assignee.name}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-foreground mb-3">{issue.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Reported by {issue.reporter?.name || 'Unknown'}</span>
-                      <span>•</span>
-                      <span>{new Date(issue.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                      {issue.assignee && (
-                        <>
-                          <span>•</span>
-                          <span>Assigned to {issue.assignee.name}</span>
-                        </>
-                      )}
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      {getSeverityBadge(issue.severity)}
+                      {getStatusBadge(issue.status)}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    {getSeverityBadge(issue.severity)}
-                    {getStatusBadge(issue.status)}
-                  </div>
+
+                  {/* Solve button — only for admins/heads and only if not yet resolved */}
+                  {canResolveIssues && issue.status !== 'resolved' && (
+                    <div className="flex justify-end pt-1 border-t border-border/30">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-success/50 text-success hover:bg-success/10 h-8 text-xs"
+                        disabled={solvingId === issue.id}
+                        onClick={() => handleMarkSolved(issue.id)}
+                      >
+                        {solvingId === issue.id ? (
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                        )}
+                        Mark as Solved
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Resolved label */}
+                  {issue.status === 'resolved' && (
+                    <div className="flex justify-end pt-1 border-t border-border/30">
+                      <span className="text-xs text-success flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Solved
+                      </span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

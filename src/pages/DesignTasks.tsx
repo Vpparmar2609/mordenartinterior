@@ -270,21 +270,21 @@ const DesignTasks: React.FC = () => {
           className="cursor-pointer"
           onClick={() => toggleProject(project.id)}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 min-w-0">
               {expandedProjects.includes(project.id) ? (
-                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
               ) : (
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
               )}
-              <div>
-                <CardTitle className="text-lg">{project.clientName}</CardTitle>
+              <div className="min-w-0">
+                <CardTitle className="text-lg truncate">{project.clientName}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   {project.tasks.filter(t => t.status === 'completed').length}/{project.totalTasks} tasks completed
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col items-end gap-2 shrink-0">
               {/* Timeline indicator */}
               {project.daysLeft !== null && (
                 <div className="flex items-center gap-2">
@@ -301,15 +301,14 @@ const DesignTasks: React.FC = () => {
                   </div>
                   <Progress 
                     value={project.timeProgress} 
-                    className={cn("w-16 h-1.5", getTimelineDisplay(project.daysLeft)?.progressClass)}
+                    className={cn("w-12 h-1.5", getTimelineDisplay(project.daysLeft)?.progressClass)}
                   />
                 </div>
               )}
-              
               {/* Task progress */}
               <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-primary">{project.progress}%</span>
-                <Progress value={project.progress} className="w-24" />
+                <span className="text-base font-semibold text-primary">{project.progress}%</span>
+                <Progress value={project.progress} className="w-16" />
               </div>
             </div>
           </div>
@@ -322,21 +321,21 @@ const DesignTasks: React.FC = () => {
                 <div 
                   key={task.id}
                   className={cn(
-                    "flex items-center justify-between p-3 rounded-lg",
+                    "flex flex-col gap-2 p-3 rounded-lg",
                     task.status === 'completed' ? 'bg-success/5' : 
                     task.status === 'in_progress' ? 'bg-warning/5' : 'bg-muted/30'
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(task.status)}
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 shrink-0">{getStatusIcon(task.status)}</div>
                     <span className={cn(
-                      "font-medium",
+                      "font-medium text-sm flex-1",
                       task.status === 'completed' && 'text-muted-foreground line-through'
                     )}>
                       {taskIndex + 1}. {task.name}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-wrap pl-7">
                     <TaskFileUpload 
                       taskId={task.id} 
                       taskType="design" 
@@ -346,7 +345,7 @@ const DesignTasks: React.FC = () => {
                     <Button 
                       size="sm" 
                       variant={task.status === 'completed' ? 'ghost' : 'outline'}
-                      className="h-8"
+                      className="h-8 text-xs"
                       onClick={() => handleToggleStatus(task.id, task.status)}
                       disabled={updateTask.isPending}
                     >
