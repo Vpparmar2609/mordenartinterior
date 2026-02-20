@@ -74,6 +74,15 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [addingDesigner, setAddingDesigner] = useState(false);
   const [newDesignerId, setNewDesignerId] = useState<string>('');
+  const [addingSupervisor, setAddingSupervisor] = useState(false);
+  const [newSupervisorId, setNewSupervisorId] = useState<string>('');
+
+  const handleAddSupervisor = async () => {
+    if (!newSupervisorId) return;
+    await assignMember.mutateAsync({ userId: newSupervisorId, role: 'site_supervisor' });
+    setAddingSupervisor(false);
+    setNewSupervisorId('');
+  };
 
   const isAdmin = currentUserRole === 'admin';
   const isDesignHead = currentUserRole === 'design_head';
@@ -473,14 +482,107 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
           isAdmin
         )}
 
-        {/* Site Supervisor - Execution Manager or Admin can assign */}
-        {renderTeamMemberRow(
-          'Site Supervisor',
-          <ClipboardCheck className="w-4 h-4" />,
-          'site_supervisor',
-          isAdmin || isExecutionManager,
-          isAdmin || isExecutionManager
-        )}
+        {/* Site Supervisors - Multiple allowed, Execution Manager or Admin can assign */}
+        {(() => {
+          const assignedSupervisors = getMembersByRole('site_supervisor');
+          const availableSupervisors = getAvailableUsers('site_supervisor');
+          const assignedIds = assignedSupervisors.map(d => d.user_id);
+          const unassignedSupervisors = availableSupervisors.filter(u => !assignedIds.includes(u.id));
+          const canManageSupervisors = isAdmin || isExecutionManager;
+
+          return (
+            <div className="p-4 rounded-lg bg-muted/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-accent"><ClipboardCheck className="w-4 h-4" /></span>
+                  <span className="font-medium">Site Supervisors</span>
+                  <Badge variant="secondary" className="text-xs">{assignedSupervisors.length}</Badge>
+                </div>
+                {canManageSupervisors && !addingSupervisor && unassignedSupervisors.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setAddingSupervisor(true)}>
+                    <UserPlus className="w-4 h-4 mr-1" />
+                    Add Supervisor
+                  </Button>
+                )}
+              </div>
+
+              {assignedSupervisors.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No supervisors assigned</p>
+              ) : (
+                <div className="space-y-2">
+                  {assignedSupervisors.map(member => (
+                    <div key={member.id} className="flex items-center justify-between pl-2">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-7 w-7 bg-gradient-warm">
+                          <AvatarFallback className="bg-transparent text-xs text-primary-foreground">
+                            {member.profile?.name.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-sm">{member.profile?.name}</p>
+                          <p className="text-xs text-muted-foreground">{member.profile?.email}</p>
+                        </div>
+                        {renderWorkloadBadge(member.user_id)}
+                      </div>
+                      {canManageSupervisors && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove supervisor?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will remove {member.profile?.name} from this project. You can reassign them later.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRemoveMember(member.user_id, 'site_supervisor')}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {addingSupervisor && (
+                <div className="flex items-center gap-2 pt-1">
+                  <Select value={newSupervisorId} onValueChange={setNewSupervisorId}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select supervisor to add..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unassignedSupervisors.map(u => (
+                        <SelectItem key={u.id} value={u.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{u.name}</span>
+                            {renderWorkloadBadge(u.id)}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" onClick={handleAddSupervisor} disabled={assignMember.isPending || !newSupervisorId}>
+                    {assignMember.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setAddingSupervisor(false); setNewSupervisorId(''); }}>
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );
