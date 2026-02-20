@@ -96,64 +96,65 @@ const ProjectDetail: React.FC = () => {
   const isStopped = lifecycleStatus === 'stopped';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Stopped Project Warning */}
       {isStopped && !isAdmin && (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-warning/10 border border-warning/30">
-          <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
-          <p className="text-sm text-warning">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-warning/10 border border-warning/30">
+          <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+          <p className="text-xs text-warning">
             This project has been stopped by the admin. View-only access is available.
           </p>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/projects')}>
-            <ArrowLeft className="w-5 h-5" />
+      <div className="space-y-3">
+        {/* Top row: back + name + status */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => navigate('/projects')}>
+            <ArrowLeft className="w-4 h-4" />
           </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="font-display text-2xl font-bold text-foreground">
-                {project.client_name}
-              </h1>
-              <Badge className={cn(colors.bg, colors.text, 'border-0')}>
-                {statusLabels[status]}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground flex items-center gap-1 mt-1">
-              <MapPin className="w-4 h-4" />
-              {project.location}
-            </p>
-          </div>
+          <h1 className="font-display text-xl font-bold text-foreground leading-tight">
+            {project.client_name}
+          </h1>
+          <Badge className={cn(colors.bg, colors.text, 'border-0 shrink-0')}>
+            {statusLabels[status]}
+          </Badge>
         </div>
-        <div className="flex items-center gap-4">
-          {/* Admin Lifecycle Controls */}
+
+        {/* Location */}
+        <p className="text-muted-foreground flex items-center gap-1 text-sm pl-1">
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
+          {project.location}
+        </p>
+
+        {/* Progress + Lifecycle controls row */}
+        <div className="flex items-center gap-3">
           {isAdmin && (
-            <ProjectLifecycleControls 
-              projectId={project.id} 
-              lifecycleStatus={lifecycleStatus} 
-            />
+            <div className="shrink-0">
+              <ProjectLifecycleControls 
+                projectId={project.id} 
+                lifecycleStatus={lifecycleStatus} 
+              />
+            </div>
           )}
-          <div className="text-right">
-            <div className="text-sm text-muted-foreground">Progress</div>
-            <div className="text-2xl font-display font-bold text-primary">{project.progress}%</div>
+          <div className="flex-1 flex items-center gap-2">
+            <Progress value={project.progress} className="h-2 flex-1" />
+            <span className="text-sm font-display font-bold text-primary shrink-0">
+              {project.progress}%
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <Progress value={project.progress} className="h-3" />
-
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="design">Design</TabsTrigger>
-          <TabsTrigger value="execution">Execution</TabsTrigger>
-          <TabsTrigger value="chat">
-            <MessageSquare className="w-4 h-4 mr-2" />
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="design" className="text-xs sm:text-sm">Design</TabsTrigger>
+          <TabsTrigger value="execution" className="text-xs sm:text-sm">Execution</TabsTrigger>
+          <TabsTrigger value="chat" className="text-xs sm:text-sm">
+            <MessageSquare className="w-3.5 h-3.5 mr-1" />
             Chat
           </TabsTrigger>
         </TabsList>
