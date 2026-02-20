@@ -86,6 +86,7 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
 
   const isAdmin = currentUserRole === 'admin';
   const isDesignHead = currentUserRole === 'design_head';
+  const isExecutionHead = currentUserRole === 'execution_head';
   const isExecutionManager = currentUserRole === 'execution_manager';
 
   // Get users by role for selection

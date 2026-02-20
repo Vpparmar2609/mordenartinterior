@@ -41,6 +41,12 @@ const roleConfig: Record<UserRole, {
     gradient: 'from-pink-500/20 to-rose-500/20',
     accent: 'border-pink-500/50 bg-pink-500/10',
   },
+  execution_head: {
+    icon: Users,
+    description: 'Oversee execution teams & site operations',
+    gradient: 'from-blue-600/20 to-indigo-500/20',
+    accent: 'border-blue-600/50 bg-blue-600/10',
+  },
   execution_manager: {
     icon: Users,
     description: 'Manage site teams, progress & approvals',
