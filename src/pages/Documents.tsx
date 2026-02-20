@@ -128,6 +128,7 @@ const Documents: React.FC = () => {
                   key={projectId}
                   projectName={project_name}
                   documents={projectDocs}
+                  activeTab={activeTab as 'all' | 'design' | 'execution'}
                 />
               ))}
             </div>

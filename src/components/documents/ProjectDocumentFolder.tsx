@@ -32,6 +32,7 @@ interface DocumentFile {
 interface ProjectDocumentFolderProps {
   projectName: string;
   documents: DocumentFile[];
+  activeTab?: 'all' | 'design' | 'execution';
 }
 
 const isImageFile = (url: string) => {
@@ -186,11 +187,21 @@ const SubFolder: React.FC<{
 export const ProjectDocumentFolder: React.FC<ProjectDocumentFolderProps> = ({
   projectName,
   documents,
+  activeTab = 'all',
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   
   const designDocs = documents.filter(d => d.type === 'design');
   const executionDocs = documents.filter(d => d.type === 'execution');
+
+  const showDesign = activeTab === 'all' || activeTab === 'design';
+  const showExecution = activeTab === 'all' || activeTab === 'execution';
+
+  const visibleCount = activeTab === 'design'
+    ? designDocs.length
+    : activeTab === 'execution'
+      ? executionDocs.length
+      : documents.length;
 
   return (
     <Card className="glass-card overflow-hidden">
@@ -208,24 +219,28 @@ export const ProjectDocumentFolder: React.FC<ProjectDocumentFolderProps> = ({
             )}
             <span className="font-display font-semibold text-lg">{projectName}</span>
             <Badge variant="outline" className="ml-auto">
-              {documents.length} files
+              {visibleCount} files
             </Badge>
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="divide-y divide-border/30">
-            <SubFolder
-              title="Design Work"
-              icon={<Palette className="w-4 h-4 text-primary" />}
-              documents={designDocs}
-              defaultOpen={designDocs.length > 0}
-            />
-            <SubFolder
-              title="Execution Work"
-              icon={<HardHat className="w-4 h-4 text-warning" />}
-              documents={executionDocs}
-              defaultOpen={executionDocs.length > 0 && designDocs.length === 0}
-            />
+            {showDesign && (
+              <SubFolder
+                title="Design Work"
+                icon={<Palette className="w-4 h-4 text-primary" />}
+                documents={designDocs}
+                defaultOpen={designDocs.length > 0}
+              />
+            )}
+            {showExecution && (
+              <SubFolder
+                title="Execution Work"
+                icon={<HardHat className="w-4 h-4 text-warning" />}
+                documents={executionDocs}
+                defaultOpen={executionDocs.length > 0 && (!showDesign || designDocs.length === 0)}
+              />
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>
