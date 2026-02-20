@@ -17,7 +17,7 @@ export const useApprovedDocuments = () => {
   const { data: documents = [], isLoading, error, refetch } = useQuery({
     queryKey: ['approved-documents'],
     queryFn: async () => {
-      // Fetch design task files from completed tasks
+      // Fetch ONLY approved design task files
       const { data: designFiles, error: designError } = await supabase
         .from('design_task_files')
         .select(`
@@ -27,6 +27,7 @@ export const useApprovedDocuments = () => {
           uploaded_at,
           uploaded_by,
           task_id,
+          approval_status,
           design_tasks!inner (
             id,
             name,
@@ -39,11 +40,11 @@ export const useApprovedDocuments = () => {
             )
           )
         `)
-        .eq('design_tasks.status', 'completed');
+        .eq('approval_status', 'approved');
 
       if (designError) throw designError;
 
-      // Fetch execution task photos from completed tasks
+      // Fetch ONLY approved execution task photos
       const { data: executionPhotos, error: execError } = await supabase
         .from('execution_task_photos')
         .select(`
@@ -53,6 +54,7 @@ export const useApprovedDocuments = () => {
           uploaded_at,
           uploaded_by,
           task_id,
+          approval_status,
           execution_tasks!inner (
             id,
             name,
@@ -65,7 +67,7 @@ export const useApprovedDocuments = () => {
             )
           )
         `)
-        .eq('execution_tasks.status', 'completed');
+        .eq('approval_status', 'approved');
 
       if (execError) throw execError;
 
