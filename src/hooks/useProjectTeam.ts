@@ -68,24 +68,24 @@ export const useProjectTeam = (projectId?: string) => {
     }) => {
       if (!projectId || !user) throw new Error('Missing project or user');
 
-      // For designers: allow multiple per project (don't remove existing)
+      // For designers and site_supervisors: allow multiple per project
       // For all other roles: enforce 1 per role
-      if (role !== 'designer') {
+      if (role !== 'designer' && role !== 'site_supervisor') {
         await supabase
           .from('project_team')
           .delete()
           .eq('project_id', projectId)
           .eq('role', role);
       } else {
-        // Check if this designer is already assigned
+        // Check if this user is already assigned with this role
         const { data: existing } = await supabase
           .from('project_team')
           .select('id')
           .eq('project_id', projectId)
           .eq('user_id', userId)
-          .eq('role', 'designer');
+          .eq('role', role);
         if (existing && existing.length > 0) {
-          throw new Error('This designer is already assigned to the project.');
+          throw new Error(`This ${role === 'designer' ? 'designer' : 'site supervisor'} is already assigned to the project.`);
         }
       }
 
