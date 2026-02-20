@@ -36,7 +36,6 @@ const projectSchema = z.object({
   location: z.string().min(3, 'Location must be at least 3 characters').max(200),
   flat_size: z.string().min(1, 'Flat size is required'),
   bhk: z.string().min(1, 'BHK is required'),
-  budget: z.string().min(1, 'Budget is required'),
   start_date: z.string().min(1, 'Start date is required'),
   deadline: z.string().min(1, 'Deadline is required'),
   design_head_id: z.string().optional(),
@@ -75,7 +74,6 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       location: '',
       flat_size: '',
       bhk: '',
-      budget: '',
       start_date: new Date().toISOString().split('T')[0],
       deadline: '',
       design_head_id: undefined,
@@ -94,7 +92,7 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       location: data.location,
       flat_size: data.flat_size,
       bhk: data.bhk,
-      budget_range: data.budget, // Store as budget_range in DB
+      budget_range: '', // Budget removed from form
       start_date: data.start_date,
       deadline: data.deadline,
       design_head_id: data.design_head_id || null,
@@ -210,23 +208,6 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="budget"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Budget (₹)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="2500000" 
-                          {...field} 
-                        />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

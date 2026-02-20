@@ -67,11 +67,13 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
   const { role: currentUserRole, user } = useAuth();
   const { users } = useUsers();
   const { updateProject } = useProjects();
-  const { teamMembers, assignMember, removeMember, getMemberByRole, isLoading: teamLoading } = useProjectTeam(projectId);
+  const { teamMembers, assignMember, removeMember, getMemberByRole, getMembersByRole, isLoading: teamLoading } = useProjectTeam(projectId);
   const { getWorkloadForUser } = useWorkload();
   
   const [editingRole, setEditingRole] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [addingDesigner, setAddingDesigner] = useState(false);
+  const [newDesignerId, setNewDesignerId] = useState<string>('');
 
   const isAdmin = currentUserRole === 'admin';
   const isDesignHead = currentUserRole === 'design_head';
@@ -98,6 +100,14 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
     await assignMember.mutateAsync({ userId: selectedUserId, role });
     setEditingRole(null);
     setSelectedUserId('');
+  };
+
+  // Handle adding a new designer
+  const handleAddDesigner = async () => {
+    if (!newDesignerId) return;
+    await assignMember.mutateAsync({ userId: newDesignerId, role: 'designer' });
+    setAddingDesigner(false);
+    setNewDesignerId('');
   };
 
   // Handle team member removal
@@ -348,14 +358,109 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
           isAdmin
         )}
 
-        {/* Designer - Design Head or Admin can assign */}
-        {renderTeamMemberRow(
-          'Designer',
-          <PenTool className="w-4 h-4" />,
-          'designer',
-          isAdmin || isDesignHead,
-          isAdmin || isDesignHead
-        )}
+        {/* Designers - Multiple allowed, Design Head or Admin can assign */}
+        {(() => {
+          const assignedDesigners = getMembersByRole('designer');
+          const availableDesigners = getAvailableUsers('designer');
+          const assignedIds = assignedDesigners.map(d => d.user_id);
+          const unassignedDesigners = availableDesigners.filter(u => !assignedIds.includes(u.id));
+          const canManageDesigners = isAdmin || isDesignHead;
+
+          return (
+            <div className="p-4 rounded-lg bg-muted/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-accent"><PenTool className="w-4 h-4" /></span>
+                  <span className="font-medium">Designers</span>
+                  <Badge variant="secondary" className="text-xs">{assignedDesigners.length}</Badge>
+                </div>
+                {canManageDesigners && !addingDesigner && unassignedDesigners.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setAddingDesigner(true)}>
+                    <UserPlus className="w-4 h-4 mr-1" />
+                    Add Designer
+                  </Button>
+                )}
+              </div>
+
+              {/* List assigned designers */}
+              {assignedDesigners.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No designers assigned</p>
+              ) : (
+                <div className="space-y-2">
+                  {assignedDesigners.map(member => (
+                    <div key={member.id} className="flex items-center justify-between pl-2">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-7 w-7 bg-gradient-warm">
+                          <AvatarFallback className="bg-transparent text-xs text-primary-foreground">
+                            {member.profile?.name.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-sm">{member.profile?.name}</p>
+                          <p className="text-xs text-muted-foreground">{member.profile?.email}</p>
+                        </div>
+                        {renderWorkloadBadge(member.user_id)}
+                      </div>
+                      {canManageDesigners && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove designer?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will remove {member.profile?.name} from this project. You can reassign them later.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRemoveMember(member.user_id, 'designer')}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add designer form */}
+              {addingDesigner && (
+                <div className="flex items-center gap-2 pt-1">
+                  <Select value={newDesignerId} onValueChange={setNewDesignerId}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select designer to add..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unassignedDesigners.map(u => (
+                        <SelectItem key={u.id} value={u.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{u.name}</span>
+                            {renderWorkloadBadge(u.id)}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" onClick={handleAddDesigner} disabled={assignMember.isPending || !newDesignerId}>
+                    {assignMember.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setAddingDesigner(false); setNewDesignerId(''); }}>
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Execution Manager - Only admin can change */}
         {renderHeadRow(

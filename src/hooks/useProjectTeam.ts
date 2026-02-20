@@ -68,12 +68,26 @@ export const useProjectTeam = (projectId?: string) => {
     }) => {
       if (!projectId || !user) throw new Error('Missing project or user');
 
-      // First, remove any existing assignment for this role (enforce 1 per role)
-      await supabase
-        .from('project_team')
-        .delete()
-        .eq('project_id', projectId)
-        .eq('role', role);
+      // For designers: allow multiple per project (don't remove existing)
+      // For all other roles: enforce 1 per role
+      if (role !== 'designer') {
+        await supabase
+          .from('project_team')
+          .delete()
+          .eq('project_id', projectId)
+          .eq('role', role);
+      } else {
+        // Check if this designer is already assigned
+        const { data: existing } = await supabase
+          .from('project_team')
+          .select('id')
+          .eq('project_id', projectId)
+          .eq('user_id', userId)
+          .eq('role', 'designer');
+        if (existing && existing.length > 0) {
+          throw new Error('This designer is already assigned to the project.');
+        }
+      }
 
       // Then add the new assignment
       const { data, error } = await supabase
@@ -144,9 +158,14 @@ export const useProjectTeam = (projectId?: string) => {
     },
   });
 
-  // Get member by role
+  // Get single member by role (for roles with 1 person)
   const getMemberByRole = (role: AppRole): ProjectTeamMember | undefined => {
     return teamQuery.data?.find(m => m.role === role);
+  };
+
+  // Get ALL members by role (for designers who can be multiple)
+  const getMembersByRole = (role: AppRole): ProjectTeamMember[] => {
+    return teamQuery.data?.filter(m => m.role === role) ?? [];
   };
 
   return {
@@ -156,6 +175,7 @@ export const useProjectTeam = (projectId?: string) => {
     assignMember,
     removeMember,
     getMemberByRole,
+    getMembersByRole,
     refetch: teamQuery.refetch,
   };
 };
