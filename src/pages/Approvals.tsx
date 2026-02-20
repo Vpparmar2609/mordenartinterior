@@ -45,9 +45,9 @@ const Approvals: React.FC = () => {
   const [previewFile, setPreviewFile] = useState<FileApproval | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
-  const [removingId, setRemovingId] = useState<string | null>(null);
+  
 
-  const { approvals, isLoading, pendingCount, approveFile, rejectFile, refetch } = useFileApprovals();
+  const { approvals, isLoading, pendingCount, approveFile, rejectFile, deleteFile, refetch } = useFileApprovals();
   const { toast } = useToast();
 
   const filteredApprovals = useMemo(() => {
@@ -155,27 +155,8 @@ const Approvals: React.FC = () => {
     }
   };
 
-  const handleRemoveFile = async (file: FileApproval) => {
-    setRemovingId(file.id);
-    try {
-      const bucket = file.type === 'design' ? 'design-files' : 'execution-photos';
-      const table = file.type === 'design' ? 'design_task_files' : 'execution_task_photos';
-      
-      // Remove from storage
-      if (!file.file_url.startsWith('http')) {
-        await supabase.storage.from(bucket).remove([file.file_url]);
-      }
-      // Remove from DB
-      const { error } = await supabase.from(table).delete().eq('id', file.id);
-      if (error) throw error;
-
-      toast({ title: 'File removed', description: 'The file has been permanently deleted.' });
-      refetch();
-    } catch (e: any) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
-    } finally {
-      setRemovingId(null);
-    }
+  const handleRemoveFile = (file: FileApproval) => {
+    deleteFile.mutate({ id: file.id, type: file.type, fileUrl: file.file_url });
   };
 
   React.useEffect(() => {
@@ -335,9 +316,9 @@ const Approvals: React.FC = () => {
                                       variant="ghost"
                                       className="h-8 w-8 p-0 text-destructive hover:text-destructive ml-auto"
                                       onClick={() => handleRemoveFile(file)}
-                                      disabled={removingId === file.id}
+                                      disabled={deleteFile.isPending}
                                     >
-                                      {removingId === file.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                                      {deleteFile.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                                     </Button>
                                   </div>
                                 </div>

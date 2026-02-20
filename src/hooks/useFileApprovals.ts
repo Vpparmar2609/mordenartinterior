@@ -175,6 +175,30 @@ export const useFileApprovals = () => {
     },
   });
 
+  const deleteFile = useMutation({
+    mutationFn: async ({ id, type, fileUrl }: { id: string; type: 'design' | 'execution'; fileUrl: string }) => {
+      const bucket = type === 'design' ? 'design-files' : 'execution-photos';
+      const table = type === 'design' ? 'design_task_files' : 'execution_task_photos';
+
+      // Remove from storage first
+      if (!fileUrl.startsWith('http')) {
+        await supabase.storage.from(bucket).remove([fileUrl]);
+      }
+      // Remove from DB
+      const { error } = await supabase.from(table).delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['file_approvals'] });
+      queryClient.invalidateQueries({ queryKey: ['design_tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['execution_tasks'] });
+      toast({ title: 'File deleted', description: 'Permanently removed from all sections.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const pendingCount = approvalsQuery.data?.filter(a => a.approval_status === 'pending').length || 0;
 
   return {
@@ -184,6 +208,7 @@ export const useFileApprovals = () => {
     pendingCount,
     approveFile,
     rejectFile,
+    deleteFile,
     refetch: approvalsQuery.refetch,
   };
 };

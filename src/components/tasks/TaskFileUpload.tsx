@@ -125,23 +125,21 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
     return () => { supabase.removeChannel(channel); };
   }, [taskId, tableName, taskType]);
 
-  const hasRejectedFiles = dbFiles.some(f => f.approval_status === 'rejected');
-  const hasPendingFiles = dbFiles.some(f => f.approval_status === 'pending');
-
-  // Uploader can only upload new if no pending/rejected (must delete first)
-  const canUploadNew = canManage || (!hasRejectedFiles && !hasPendingFiles);
+  // Can upload only if no file exists yet (1 file limit)
+  const canUploadNew = dbFiles.length === 0;
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = event.target.files;
     if (!selectedFiles || selectedFiles.length === 0 || !user) return;
 
-    // Block upload if there are rejected files (for non-managers)
-    if (!canManage && hasRejectedFiles) {
+    // Only 1 file allowed per task — must delete existing first
+    if (dbFiles.length >= 1) {
       toast({
-        title: 'Delete rejected files first',
-        description: 'Please delete your rejected files before uploading new ones.',
+        title: 'One file per task',
+        description: 'Please delete the existing file before uploading a new one.',
         variant: 'destructive',
       });
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
@@ -149,36 +147,34 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
     setUploadProgress(0);
 
     try {
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${taskId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const file = selectedFiles[0]; // only take first file
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${taskId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from(bucketName)
-          .upload(fileName, file);
+      const { error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, file);
 
-        if (uploadError) throw uploadError;
+      if (uploadError) throw uploadError;
 
-        if (taskType === 'design') {
-          const { error: dbError } = await supabase
-            .from('design_task_files')
-            .insert({ task_id: taskId, file_name: file.name, file_url: fileName, uploaded_by: user.id })
-            .select().single();
-          if (dbError) throw dbError;
-        } else {
-          const { error: dbError } = await supabase
-            .from('execution_task_photos')
-            .insert({ task_id: taskId, photo_url: fileName, uploaded_by: user.id, caption: file.name })
-            .select().single();
-          if (dbError) throw dbError;
-        }
-
-        setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
+      if (taskType === 'design') {
+        const { error: dbError } = await supabase
+          .from('design_task_files')
+          .insert({ task_id: taskId, file_name: file.name, file_url: fileName, uploaded_by: user.id })
+          .select().single();
+        if (dbError) throw dbError;
+      } else {
+        const { error: dbError } = await supabase
+          .from('execution_task_photos')
+          .insert({ task_id: taskId, photo_url: fileName, uploaded_by: user.id, caption: file.name })
+          .select().single();
+        if (dbError) throw dbError;
       }
 
-      toast({ title: 'Upload complete', description: `${selectedFiles.length} file(s) uploaded.` });
+      setUploadProgress(100);
+      toast({ title: 'Upload complete', description: `${file.name} uploaded successfully.` });
       queryClient.invalidateQueries({ queryKey: [taskType === 'design' ? 'design_tasks' : 'execution_tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['file_approvals'] });
       onUploadComplete?.();
     } catch (error: any) {
       toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
@@ -403,21 +399,10 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
                   </div>
                 ))}
                 
-                {/* Upload more - blocked if rejected */}
-                {canUploadNew ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="w-full mt-2"
-                  >
-                    {isUploading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
-                    Upload More
-                  </Button>
-                ) : (
-                  <div className="text-xs text-destructive text-center py-2 bg-destructive/5 rounded border border-destructive/20">
-                    Delete rejected files before uploading new ones
+                {/* 1-file limit: show hint when file exists */}
+                {dbFiles.length > 0 && (
+                  <div className="text-xs text-muted-foreground text-center py-2 bg-muted/30 rounded border">
+                    Delete the file above to upload a new one
                   </div>
                 )}
               </div>
@@ -498,10 +483,9 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
         </div>
       )}
 
-      {!canUploadNew && (
-        <div className="border-2 border-dashed border-destructive/30 rounded-lg p-4 text-center bg-destructive/5">
-          <XCircle className="w-5 h-5 mx-auto mb-1 text-destructive" />
-          <p className="text-sm text-destructive">Delete your rejected files before uploading new ones.</p>
+      {!canUploadNew && dbFiles.length > 0 && (
+        <div className="border-2 border-dashed border-muted/50 rounded-lg p-3 text-center bg-muted/10">
+          <p className="text-xs text-muted-foreground">Delete the existing file to upload a new one.</p>
         </div>
       )}
 
