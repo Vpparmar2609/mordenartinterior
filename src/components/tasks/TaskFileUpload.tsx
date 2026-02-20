@@ -102,6 +102,9 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
       setDbFiles(mappedFiles);
       if (mappedFiles.length > 0) {
         setLastUploadTime(mappedFiles[0].uploaded_at);
+      } else {
+        setLastUploadTime(null);
+        setIsDialogOpen(false);
       }
     }
   };
@@ -244,6 +247,11 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
   const handleDelete = async (file: UploadedFile) => {
     // Only uploader (for rejected/own files) or managers can delete
     setDeletingId(file.id);
+    // Optimistically remove from local state immediately
+    setDbFiles(prev => prev.filter(f => f.id !== file.id));
+    if (dbFiles.filter(f => f.id !== file.id).length === 0) {
+      setLastUploadTime(null);
+    }
     try {
       // Delete from storage
       if (!file.file_url.startsWith('http')) {
@@ -252,10 +260,12 @@ export const TaskFileUpload: React.FC<TaskFileUploadProps> = ({
       // Delete from DB
       const { error } = await supabase.from(tableName).delete().eq('id', file.id);
       if (error) throw error;
-      toast({ title: 'File removed' });
-      fetchFiles();
+      toast({ title: 'File removed', description: 'The file has been permanently deleted.' });
       queryClient.invalidateQueries({ queryKey: ['file_approvals'] });
+      queryClient.invalidateQueries({ queryKey: [taskType === 'design' ? 'design_tasks' : 'execution_tasks'] });
     } catch (e: any) {
+      // Revert optimistic update on error
+      fetchFiles();
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     } finally {
       setDeletingId(null);
