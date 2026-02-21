@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { RoleCard } from '@/components/auth/RoleCard';
 import { roleLabels } from '@/types/auth';
 import { 
@@ -34,7 +35,7 @@ const RoleBasedLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [roleError, setRoleError] = useState<string | null>(null);
   
-  const { signIn, isLoading, isAuthenticated, role } = useAuth();
+  const { signIn, signOut, isLoading, isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated (with or without role)
@@ -66,44 +67,64 @@ const RoleBasedLogin: React.FC = () => {
     setRoleError(null);
   };
 
+  const [isValidating, setIsValidating] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRoleError(null);
+    setIsValidating(true);
     
     const { error } = await signIn(email, password);
     if (error) {
+      setIsValidating(false);
       if (error.message.includes('Invalid login credentials')) {
         toast.error('Invalid email or password');
       } else {
         toast.error(error.message);
       }
-    } else {
-      toast.success(`Welcome! Logging in as ${roleLabels[selectedRole!]}`);
+      return;
+    }
+
+    // Auth succeeded — now validate role server-side
+    try {
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '')
+        .maybeSingle();
+
+      if (roleError) {
+        console.error('Role fetch error:', roleError);
+      }
+
+      const actualRole = roleData?.role as UserRole | null;
+
+      if (!actualRole) {
+        // No role assigned — sign out
+        await signOut();
+        setIsValidating(false);
+        setRoleError('Your account has no role assigned. Please contact your administrator.');
+        return;
+      }
+
+      if (actualRole !== selectedRole) {
+        // Role mismatch — sign out immediately
+        await signOut();
+        setIsValidating(false);
+        setRoleError('Invalid role selected. Please choose your correct role to log in.');
+        return;
+      }
+
+      // Role matches — allow login
+      setIsValidating(false);
+      toast.success(`Welcome! Logged in as ${roleLabels[selectedRole!]}`);
+      navigate('/dashboard');
+    } catch (err) {
+      await signOut();
+      setIsValidating(false);
+      setRoleError('An error occurred validating your role. Please try again.');
     }
   };
-
-  // After login, verify role matches or handle no-role scenario
-  useEffect(() => {
-    if (isAuthenticated && step === 'credentials' && !isLoading) {
-      // Give time for role to be fetched
-      const timer = setTimeout(() => {
-        if (role && selectedRole) {
-          if (role !== selectedRole) {
-            setRoleError(`Your account is registered as ${roleLabels[role]}, not ${roleLabels[selectedRole]}. Redirecting to your dashboard...`);
-            setTimeout(() => {
-              navigate('/dashboard');
-            }, 2000);
-          } else {
-            navigate('/dashboard');
-          }
-        } else if (!role) {
-          // No role assigned yet - still redirect to dashboard where they'll see appropriate message
-          navigate('/dashboard');
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, role, selectedRole, step, navigate, isLoading]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -185,9 +206,9 @@ const RoleBasedLogin: React.FC = () => {
                 </div>
 
                 {roleError && (
-                  <div className="mb-4 p-3 rounded-lg bg-warning/10 border border-warning/30 flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-                    <p className="text-sm text-warning">{roleError}</p>
+                  <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                    <p className="text-sm text-destructive">{roleError}</p>
                   </div>
                 )}
 
@@ -231,9 +252,9 @@ const RoleBasedLogin: React.FC = () => {
                     variant="default" 
                     size="lg" 
                     className="w-full bg-gradient-warm hover:opacity-90" 
-                    disabled={isLoading}
+                    disabled={isLoading || isValidating}
                   >
-                    {isLoading ? 'Please wait...' : 'Sign In'}
+                    {isLoading || isValidating ? 'Verifying...' : 'Sign In'}
                   </Button>
                 </form>
               </>

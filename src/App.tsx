@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthProvider, useAuth, UserRole } from "./contexts/AuthContext";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
 import RoleBasedLogin from "./pages/RoleBasedLogin";
 
@@ -41,8 +41,8 @@ const queryClient = new QueryClient({
   },
 });
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: UserRole[] }) => {
+  const { isAuthenticated, isLoading, role } = useAuth();
   
   if (isLoading) {
     return (
@@ -54,6 +54,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
+  }
+
+  // If allowedRoles specified, enforce role check
+  if (allowedRoles && role && !allowedRoles.includes(role)) {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return <>{children}</>;
@@ -74,18 +79,62 @@ const App = () => (
               {/* Protected routes with dashboard layout */}
               <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/projects/:id" element={<ProjectDetail />} />
-                <Route path="/team" element={<Team />} />
-                <Route path="/design-tasks" element={<DesignTasks />} />
-                <Route path="/execution-tasks" element={<ExecutionTasks />} />
-                <Route path="/issues" element={<Issues />} />
-                <Route path="/approvals" element={<Approvals />} />
-                <Route path="/accounts" element={<Accounts />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/documents" element={<Documents />} />
+                <Route path="/projects" element={
+                  <ProtectedRoute allowedRoles={['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor']}>
+                    <Projects />
+                  </ProtectedRoute>
+                } />
+                <Route path="/projects/:id" element={
+                  <ProtectedRoute allowedRoles={['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor']}>
+                    <ProjectDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/team" element={
+                  <ProtectedRoute allowedRoles={['admin', 'design_head', 'execution_manager']}>
+                    <Team />
+                  </ProtectedRoute>
+                } />
+                <Route path="/design-tasks" element={
+                  <ProtectedRoute allowedRoles={['admin', 'design_head', 'designer', 'execution_manager']}>
+                    <DesignTasks />
+                  </ProtectedRoute>
+                } />
+                <Route path="/execution-tasks" element={
+                  <ProtectedRoute allowedRoles={['admin', 'execution_manager', 'site_supervisor']}>
+                    <ExecutionTasks />
+                  </ProtectedRoute>
+                } />
+                <Route path="/issues" element={
+                  <ProtectedRoute allowedRoles={['admin', 'design_head', 'execution_manager']}>
+                    <Issues />
+                  </ProtectedRoute>
+                } />
+                <Route path="/approvals" element={
+                  <ProtectedRoute allowedRoles={['admin', 'design_head', 'execution_manager']}>
+                    <Approvals />
+                  </ProtectedRoute>
+                } />
+                <Route path="/accounts" element={
+                  <ProtectedRoute allowedRoles={['admin', 'account_manager']}>
+                    <Accounts />
+                  </ProtectedRoute>
+                } />
+                <Route path="/messages" element={
+                  <ProtectedRoute allowedRoles={['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor']}>
+                    <Messages />
+                  </ProtectedRoute>
+                } />
+                <Route path="/documents" element={
+                  <ProtectedRoute allowedRoles={['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor']}>
+                    <Documents />
+                  </ProtectedRoute>
+                } />
                 <Route path="/notifications" element={<Notifications />} />
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/settings" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                } />
               </Route>
               
               {/* Catch all */}
