@@ -90,7 +90,7 @@ const navItems: NavItem[] = [
     icon: <FileText className="w-5 h-5" />,
     label: 'Documents',
     href: '/documents',
-    roles: ['admin', 'design_head', 'designer', 'execution_manager'],
+    roles: ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor'],
   },
   {
     icon: <Bell className="w-5 h-5" />,
