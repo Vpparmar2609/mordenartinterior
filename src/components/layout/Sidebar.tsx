@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
     icon: <Palette className="w-5 h-5" />,
     label: 'Design Tasks',
     href: '/design-tasks',
-    roles: ['admin', 'design_head', 'designer'],
+    roles: ['admin', 'design_head', 'designer', 'execution_manager'],
   },
   {
     icon: <HardHat className="w-5 h-5" />,
