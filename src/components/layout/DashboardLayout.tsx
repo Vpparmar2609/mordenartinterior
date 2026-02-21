@@ -21,7 +21,7 @@ export const DashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-background overflow-x-hidden">
       <Sidebar />
-      <main className="md:ml-64 min-h-screen min-h-[100dvh]">
+      <main id="main-content" role="main" className="md:ml-64 min-h-screen min-h-[100dvh]">
         <div className="p-3 sm:p-4 md:p-8 pt-16 md:pt-8 max-w-full">
           <Outlet />
         </div>
