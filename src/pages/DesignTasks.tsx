@@ -272,8 +272,10 @@ const DesignTasks: React.FC = () => {
         style={{ animationDelay: `${index * 50}ms` }}
       >
         <CardHeader 
-          className="cursor-pointer"
+          className="cursor-pointer select-none active:bg-muted/30 transition-colors touch-manipulation"
           onClick={() => toggleProject(project.id)}
+          role="button"
+          tabIndex={0}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-start gap-2 min-w-0">

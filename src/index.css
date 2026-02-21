@@ -169,3 +169,10 @@
     background: var(--gradient-glow);
   }
 }
+
+@layer utilities {
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
