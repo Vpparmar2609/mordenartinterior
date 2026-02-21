@@ -203,8 +203,10 @@ const ExecutionTasks: React.FC = () => {
       >
         {/* Stage Header */}
         <div 
-          className="flex items-start justify-between p-3 cursor-pointer hover:bg-muted/30 transition-colors gap-2"
+          className="flex items-start justify-between p-3 cursor-pointer hover:bg-muted/30 active:bg-muted/40 transition-colors gap-2 select-none touch-manipulation"
           onClick={() => toggleStage(stageKey)}
+          role="button"
+          tabIndex={0}
         >
           <div className="flex items-center gap-2 min-w-0">
             {isExpanded ? (
@@ -290,8 +292,10 @@ const ExecutionTasks: React.FC = () => {
         style={{ animationDelay: `${index * 50}ms` }}
       >
         <CardHeader 
-          className="cursor-pointer"
+          className="cursor-pointer select-none active:bg-muted/30 transition-colors touch-manipulation"
           onClick={() => toggleProject(project.id)}
+          role="button"
+          tabIndex={0}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-start gap-2 min-w-0">
