@@ -18,4 +18,12 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    // Fallback env vars in case .env is not provisioned
+    ...(process.env.VITE_SUPABASE_URL ? {} : {
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify("https://zdlmvfmrhcddnlywqecp.supabase.co"),
+      'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkbG12Zm1yaGNkZG5seXdxZWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkyNjEyNjksImV4cCI6MjA4NDgzNzI2OX0.7bt0HxB1XYOA8RVhzyAwrk20TwKFz38GJ37ntjao-FA"),
+      'import.meta.env.VITE_SUPABASE_PROJECT_ID': JSON.stringify("zdlmvfmrhcddnlywqecp"),
+    }),
+  },
 }));
