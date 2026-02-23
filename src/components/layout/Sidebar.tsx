@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, roleLabels } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import logoImg from '@/assets/logo.ico';
 import {
   LayoutDashboard,
   FolderKanban,
@@ -16,7 +18,6 @@ import {
   LogOut,
   CheckSquare,
   AlertTriangle,
-  Building2,
   Bell,
   IndianRupee,
   Menu,
@@ -140,9 +141,7 @@ const SidebarContent: React.FC<SidebarProps> = ({ open, onClose }) => {
       <div className="p-4 md:p-6 border-b border-sidebar-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-warm">
-              <Building2 className="w-5 h-5 md:w-6 md:h-6 text-primary-foreground" />
-            </div>
+            <img src={logoImg} alt="Logo" className="w-9 h-9 md:w-10 md:h-10 rounded-xl object-contain" />
             <div>
               <h1 className="font-display text-base md:text-lg font-semibold text-sidebar-foreground">
                 Modern Art
@@ -187,10 +186,19 @@ const SidebarContent: React.FC<SidebarProps> = ({ open, onClose }) => {
 
       {/* User section */}
       <div className="p-3 md:p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-warm flex items-center justify-center text-primary-foreground font-medium text-sm">
-            {profile?.name?.charAt(0) || 'U'}
-          </div>
+        <NavLink
+          to="/profile"
+          onClick={handleNavClick}
+          className="flex items-center gap-3 mb-3 p-1 -m-1 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer"
+        >
+          <Avatar className="w-9 h-9 md:w-10 md:h-10">
+            {profile?.avatar_url ? (
+              <AvatarImage src={profile.avatar_url} alt={profile.name} />
+            ) : null}
+            <AvatarFallback className="bg-gradient-warm text-primary-foreground font-medium text-sm">
+              {profile?.name?.charAt(0) || 'U'}
+            </AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-foreground truncate">
               {profile?.name || 'User'}
@@ -199,7 +207,7 @@ const SidebarContent: React.FC<SidebarProps> = ({ open, onClose }) => {
               {role && roleLabels[role]}
             </p>
           </div>
-        </div>
+        </NavLink>
         <Button
           variant="ghost"
           size="sm"

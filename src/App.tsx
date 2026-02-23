@@ -22,6 +22,7 @@ const Documents = lazy(() => import("./pages/Documents"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Accounts = lazy(() => import("./pages/Accounts"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
+const ProfilePage = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -130,6 +131,7 @@ const App = () => (
                   </ProtectedRoute>
                 } />
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <SettingsPage />
