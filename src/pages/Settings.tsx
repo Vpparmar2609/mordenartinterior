@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUsers } from '@/hooks/useUsers';
 import { UserManagementDialog } from '@/components/users/UserManagementDialog';
+import { AvatarUpload } from '@/components/profile/AvatarUpload';
 import {
   Settings as SettingsIcon,
   Users,
@@ -16,6 +17,7 @@ import {
   Bell,
   UserPlus,
   Info,
+  User,
 } from 'lucide-react';
 
 const Settings: React.FC = () => {
@@ -49,6 +51,20 @@ const Settings: React.FC = () => {
         </h1>
         <p className="text-muted-foreground mt-1">Manage your application preferences and team</p>
       </div>
+
+      {/* Profile Photo */}
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg font-display">
+            <User className="w-5 h-5 text-accent" />
+            Profile Photo
+          </CardTitle>
+          <CardDescription>Upload or change your profile picture</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AvatarUpload />
+        </CardContent>
+      </Card>
 
       {/* Company Info */}
       <Card className="glass-card">
