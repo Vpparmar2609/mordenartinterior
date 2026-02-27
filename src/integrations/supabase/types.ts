@@ -979,6 +979,142 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_costs: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          project_id: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          project_id: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          project_id?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_costs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_payment_stages: {
+        Row: {
+          created_at: string
+          id: string
+          paid_amount: number
+          percentage: number
+          project_id: string
+          required_amount: number
+          stage: Database["public"]["Enums"]["vendor_payment_stage"]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          paid_amount?: number
+          percentage: number
+          project_id: string
+          required_amount?: number
+          stage: Database["public"]["Enums"]["vendor_payment_stage"]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          paid_amount?: number
+          percentage?: number
+          project_id?: string
+          required_amount?: number
+          stage?: Database["public"]["Enums"]["vendor_payment_stage"]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_payment_stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string | null
+          project_id: string
+          proof_url: string | null
+          recorded_by: string
+          reference_number: string | null
+          stage_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          project_id: string
+          proof_url?: string | null
+          recorded_by: string
+          reference_number?: string | null
+          stage_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          project_id?: string
+          proof_url?: string | null
+          recorded_by?: string
+          reference_number?: string | null
+          stage_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_payment_transactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_payment_transactions_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_payment_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1061,6 +1197,13 @@ export type Database = {
         | "snag_fix"
         | "completed"
       task_status: "pending" | "in_progress" | "completed" | "revision"
+      vendor_payment_stage:
+        | "pop_work"
+        | "material_unload"
+        | "raw_work"
+        | "laminate_work"
+        | "color_fabric"
+        | "final_inspection"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1221,6 +1364,14 @@ export const Constants = {
         "completed",
       ],
       task_status: ["pending", "in_progress", "completed", "revision"],
+      vendor_payment_stage: [
+        "pop_work",
+        "material_unload",
+        "raw_work",
+        "laminate_work",
+        "color_fabric",
+        "final_inspection",
+      ],
     },
   },
 } as const
