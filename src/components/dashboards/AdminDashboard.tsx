@@ -4,13 +4,10 @@ import { Button } from '@/components/ui/button';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { useProjects, useProjectStats } from '@/hooks/useProjects';
 import { useUsers } from '@/hooks/useUsers';
-import { useProjectPayments } from '@/hooks/useProjectPayments';
-import { useVendorPayments } from '@/hooks/useVendorPayments';
 import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
 import { UserManagementDialog } from '@/components/users/UserManagementDialog';
 import { ProjectList } from '@/components/projects/ProjectList';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { 
   FolderKanban, 
   Users, 
@@ -20,28 +17,18 @@ import {
   HardHat,
   Plus,
   UserPlus,
-  IndianRupee,
-  TrendingUp,
-  ArrowRight,
 } from 'lucide-react';
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
 export const AdminDashboard: React.FC = () => {
   const { role } = useAuth();
-  const navigate = useNavigate();
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const { stats, isLoading: statsLoading } = useProjectStats();
   const { projects, isLoading: projectsLoading } = useProjects();
   const { users, isLoading: usersLoading } = useUsers();
-  const { totals: clientTotals } = useProjectPayments();
-  const { totals: vendorTotals } = useVendorPayments();
 
   const isAdmin = role === 'admin';
 
-  // Simplified stats - only project counts, no task numbers
   const statCards = [
     {
       title: 'Total Projects',
@@ -77,7 +64,6 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Quick Actions - Only for Admin */}
       {isAdmin && (
         <div className="flex flex-wrap gap-3">
           <Button onClick={() => setShowCreateProject(true)} variant="hero" size="lg">
@@ -91,7 +77,6 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Stats Grid - Simplified */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {statCards.map((stat, index) => (
           <StatsCard
@@ -104,7 +89,6 @@ export const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Projects and Team Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -169,41 +153,6 @@ export const AdminDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Financial Overview */}
-      <Card className="glass-card animate-fade-in" style={{ animationDelay: '350ms' }}>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-display">Financial Overview</CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/accounts')}>
-            Details <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Client Received</p>
-              <p className="text-lg font-bold text-success">{formatCurrency(clientTotals.totalReceived)}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Client Pending</p>
-              <p className="text-lg font-bold text-warning">{formatCurrency(clientTotals.totalPending)}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Vendor Paid</p>
-              <p className="text-lg font-bold text-primary">{formatCurrency(vendorTotals.totalPaid)}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-center">
-              <p className="text-xs text-muted-foreground mb-1">
-                <TrendingUp className="w-3 h-3 inline mr-1" />Margin
-              </p>
-              <p className={`text-lg font-bold ${(clientTotals.totalReceived - vendorTotals.totalPaid) >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {formatCurrency(clientTotals.totalReceived - vendorTotals.totalPaid)}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Dialogs */}
       <CreateProjectDialog open={showCreateProject} onOpenChange={setShowCreateProject} />
       <UserManagementDialog open={showUserManagement} onOpenChange={setShowUserManagement} />
     </div>
