@@ -196,7 +196,7 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="*/*"
               onChange={handleFileChange}
               className="hidden"
             />
