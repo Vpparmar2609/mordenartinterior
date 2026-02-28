@@ -784,7 +784,9 @@ export type Database = {
           created_at: string
           created_by: string
           deadline: string
+          design_end_date: string | null
           design_head_id: string | null
+          design_start_date: string | null
           execution_manager_id: string | null
           flat_size: string
           id: string
@@ -805,7 +807,9 @@ export type Database = {
           created_at?: string
           created_by: string
           deadline: string
+          design_end_date?: string | null
           design_head_id?: string | null
+          design_start_date?: string | null
           execution_manager_id?: string | null
           flat_size: string
           id?: string
@@ -826,7 +830,9 @@ export type Database = {
           created_at?: string
           created_by?: string
           deadline?: string
+          design_end_date?: string | null
           design_head_id?: string | null
+          design_start_date?: string | null
           execution_manager_id?: string | null
           flat_size?: string
           id?: string
