@@ -29,6 +29,7 @@ import { getProjectStagesInfo, StageInfo, EXECUTION_STAGES, getStageForTask } fr
 import { CreateUrgentTaskDialog } from '@/components/tasks/CreateUrgentTaskDialog';
 import { UrgentTasksList } from '@/components/tasks/UrgentTasksList';
 import { useMyUrgentTasks } from '@/hooks/useUrgentTasks';
+import { ExecutionTimelineEditor } from '@/components/tasks/ExecutionTimelineEditor';
 
 const ExecutionTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,10 +42,15 @@ const ExecutionTasks: React.FC = () => {
   });
   const { user, role } = useAuth();
   const { isAdmin, isExecutionManager } = useUserRole();
-  const { projects, isLoading: projectsLoading } = useProjects();
+  const { projects, isLoading: projectsLoading, updateProject } = useProjects();
   const { tasks: allTasks, isLoading: tasksLoading, updateTask } = useAllExecutionTasks();
   const { tasks: myUrgentTasks } = useMyUrgentTasks();
   const canApproveFiles = isAdmin || isExecutionManager;
+  const canEditTimeline = isAdmin || isExecutionManager;
+
+  const handleSaveTimeline = (projectId: string, startDate: string, endDate: string) => {
+    updateProject.mutate({ id: projectId, execution_start_date: startDate, execution_end_date: endDate } as any);
+  };
 
   // Group tasks by project with stage info
   const projectsWithStages = useMemo(() => {
@@ -329,6 +335,15 @@ const ExecutionTasks: React.FC = () => {
                   <Zap className="w-3 h-3 mr-1" />
                   Urgent
                 </Button>
+              )}
+              {canEditTimeline && (
+                <ExecutionTimelineEditor
+                  projectId={project.id}
+                  currentStartDate={projects.find(p => p.id === project.id)?.execution_start_date ?? null}
+                  currentEndDate={projects.find(p => p.id === project.id)?.execution_end_date ?? null}
+                  onSave={handleSaveTimeline}
+                  isSaving={updateProject.isPending}
+                />
               )}
               <div className="flex items-center gap-2">
                 <span className="text-base font-semibold text-primary">{project.progress}%</span>
