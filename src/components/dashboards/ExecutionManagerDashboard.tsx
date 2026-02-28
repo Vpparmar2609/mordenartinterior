@@ -41,6 +41,7 @@ export const ExecutionManagerDashboard: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [myProjectIds, setMyProjectIds] = useState<string[]>([]);
+  const [executionTasks, setExecutionTasks] = useState<any[]>([]);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedSupervisor, setSelectedSupervisor] = useState<string>('');
@@ -67,8 +68,30 @@ export const ExecutionManagerDashboard: React.FC = () => {
     fetchMyProjects();
   }, [user]);
 
+  // Fetch execution tasks for my projects
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (myProjectIds.length === 0) {
+        setExecutionTasks([]);
+        return;
+      }
+      
+      const { data } = await supabase
+        .from('execution_tasks')
+        .select('*')
+        .in('project_id', myProjectIds);
+
+      if (data) {
+        setExecutionTasks(data);
+      }
+    };
+
+    fetchTasks();
+  }, [myProjectIds]);
+
   const myProjects = projects.filter(p => myProjectIds.includes(p.id));
   const myIssues = issues.filter(i => myProjectIds.includes(i.project_id) && i.status !== 'resolved');
+  const completedTasksCount = executionTasks.filter(t => t.status === 'completed').length;
 
   const handleAssignSupervisor = async () => {
     if (!selectedProject || !selectedSupervisor || !user) return;
@@ -122,7 +145,7 @@ export const ExecutionManagerDashboard: React.FC = () => {
     },
     {
       title: 'Tasks Completed',
-      value: '0',
+      value: completedTasksCount.toString(),
       icon: <CheckCircle2 className="w-5 h-5" />,
     },
     {
