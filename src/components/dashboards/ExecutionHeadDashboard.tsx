@@ -50,9 +50,28 @@ export const ExecutionHeadDashboard: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedManager, setSelectedManager] = useState<string>('');
   const [isAssigning, setIsAssigning] = useState(false);
+  const [teamProjectIds, setTeamProjectIds] = useState<string[]>([]);
 
-  // Filter projects assigned to this execution head
-  const myProjects = projects.filter(p => p.execution_manager_id === user?.id);
+  // Fetch projects assigned via project_team table
+  React.useEffect(() => {
+    const fetchTeamProjects = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('project_team')
+        .select('project_id')
+        .eq('user_id', user.id)
+        .eq('role', 'execution_manager');
+      if (data) {
+        setTeamProjectIds(data.map(d => d.project_id));
+      }
+    };
+    fetchTeamProjects();
+  }, [user]);
+
+  // Filter projects assigned to this execution head (via projects table OR project_team)
+  const myProjects = projects.filter(p => 
+    p.execution_manager_id === user?.id || teamProjectIds.includes(p.id)
+  );
   const executionProjects = myProjects.filter(p => 
     ['execution_started', 'work_in_progress', 'finishing', 'handover_pending', 'snag_fix'].includes(p.status)
   );
