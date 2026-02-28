@@ -787,7 +787,9 @@ export type Database = {
           design_end_date: string | null
           design_head_id: string | null
           design_start_date: string | null
+          execution_end_date: string | null
           execution_manager_id: string | null
+          execution_start_date: string | null
           flat_size: string
           id: string
           lifecycle_status: string
@@ -810,7 +812,9 @@ export type Database = {
           design_end_date?: string | null
           design_head_id?: string | null
           design_start_date?: string | null
+          execution_end_date?: string | null
           execution_manager_id?: string | null
+          execution_start_date?: string | null
           flat_size: string
           id?: string
           lifecycle_status?: string
@@ -833,7 +837,9 @@ export type Database = {
           design_end_date?: string | null
           design_head_id?: string | null
           design_start_date?: string | null
+          execution_end_date?: string | null
           execution_manager_id?: string | null
+          execution_start_date?: string | null
           flat_size?: string
           id?: string
           lifecycle_status?: string
