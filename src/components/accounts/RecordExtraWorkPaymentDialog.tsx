@@ -192,7 +192,7 @@ export const RecordExtraWorkPaymentDialog: React.FC<RecordExtraWorkPaymentDialog
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="*/*"
               onChange={handleFileChange}
               className="hidden"
             />

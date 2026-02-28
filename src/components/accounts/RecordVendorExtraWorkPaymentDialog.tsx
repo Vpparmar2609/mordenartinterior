@@ -118,7 +118,7 @@ export const RecordVendorExtraWorkPaymentDialog: React.FC<RecordVendorExtraWorkP
           </div>
           <div className="space-y-2">
             <Label>Payment Proof (Screenshot/Photo)</Label>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="*/*" onChange={handleFileChange} className="hidden" />
             {proofFile ? (
               <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/50">
                 <Image className="w-4 h-4 text-muted-foreground" />
