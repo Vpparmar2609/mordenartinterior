@@ -130,45 +130,6 @@ const Accounts: React.FC = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Users className="w-4 h-4 text-success" />
-              <p className="text-xs text-muted-foreground">Client Received</p>
-            </div>
-            <p className="text-lg font-bold text-success">{formatCurrency(totals.totalReceived)}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Users className="w-4 h-4 text-warning" />
-              <p className="text-xs text-muted-foreground">Client Pending</p>
-            </div>
-            <p className="text-lg font-bold text-warning">{formatCurrency(totals.totalPending)}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Truck className="w-4 h-4 text-primary" />
-              <p className="text-xs text-muted-foreground">Vendor Paid</p>
-            </div>
-            <p className="text-lg font-bold text-primary">{formatCurrency(vendorTotals.totalPaid)}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Truck className="w-4 h-4 text-warning" />
-              <p className="text-xs text-muted-foreground">Vendor Pending</p>
-            </div>
-            <p className="text-lg font-bold text-warning">{formatCurrency(vendorTotals.totalPending)}</p>
-          </CardContent>
-        </Card>
-      </div>
 
       <Tabs defaultValue="client" className="space-y-4">
         <TabsList className="w-full sm:w-auto">
