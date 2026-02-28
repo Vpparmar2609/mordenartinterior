@@ -9,6 +9,7 @@ import { useVendorPayments, vendorStageLabels, VendorPaymentStage, VendorPayment
 import { useUserRole } from '@/hooks/useUserRole';
 import { useProjects } from '@/hooks/useProjects';
 import { Progress } from '@/components/ui/progress';
+import { MilestoneProgressBar } from '@/components/accounts/MilestoneProgressBar';
 import { 
   IndianRupee, Search, ChevronDown, ChevronUp, Plus, Loader2,
   History, CreditCard, Users, Truck
@@ -227,7 +228,19 @@ const Accounts: React.FC = () => {
                           <div className="min-w-0">
                             <CardTitle className="text-base sm:text-lg truncate">{project.client_name}</CardTitle>
                             <p className="text-sm text-muted-foreground mt-1">Total: {formatCurrency(project.total_cost)}</p>
-                            <Progress value={project.total_cost > 0 ? (project.total_paid / project.total_cost) * 100 : 0} className="h-1.5 mt-2" />
+                            <MilestoneProgressBar
+                              compact
+                              segments={project.stages.map(s => ({
+                                label: stageLabels[s.stage as PaymentStage],
+                                percentage: s.percentage,
+                                status: s.status,
+                                paid: s.paid_amount,
+                                required: s.required_amount,
+                              }))}
+                              totalPaid={project.total_paid}
+                              totalCost={project.total_cost}
+                              className="mt-2"
+                            />
                           </div>
                           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                             <div className="text-right">
@@ -370,7 +383,19 @@ const Accounts: React.FC = () => {
                           <div className="min-w-0">
                             <CardTitle className="text-base sm:text-lg truncate">{project.client_name}</CardTitle>
                             <p className="text-sm text-muted-foreground mt-1">Vendor Total: {formatCurrency(project.total_cost)}</p>
-                            <Progress value={project.total_cost > 0 ? (project.total_paid / project.total_cost) * 100 : 0} className="h-1.5 mt-2" />
+                            <MilestoneProgressBar
+                              compact
+                              segments={project.stages.map(s => ({
+                                label: vendorStageLabels[s.stage as VendorPaymentStage],
+                                percentage: s.percentage,
+                                status: s.status as 'pending' | 'partial' | 'completed',
+                                paid: s.paid_amount,
+                                required: s.required_amount,
+                              }))}
+                              totalPaid={project.total_paid}
+                              totalCost={project.total_cost}
+                              className="mt-2"
+                            />
                           </div>
                           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                             <div className="text-right">
