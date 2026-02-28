@@ -29,6 +29,10 @@ import { ExtraWorkPaymentHistoryDialog } from '@/components/accounts/ExtraWorkPa
 import { SetVendorCostDialog } from '@/components/accounts/SetVendorCostDialog';
 import { RecordVendorPaymentDialog } from '@/components/accounts/RecordVendorPaymentDialog';
 import { VendorPaymentHistoryDialog } from '@/components/accounts/VendorPaymentHistoryDialog';
+import { useVendorExtraWork } from '@/hooks/useVendorExtraWork';
+import { AddVendorExtraWorkDialog } from '@/components/accounts/AddVendorExtraWorkDialog';
+import { RecordVendorExtraWorkPaymentDialog } from '@/components/accounts/RecordVendorExtraWorkPaymentDialog';
+import { VendorExtraWorkPaymentHistoryDialog } from '@/components/accounts/VendorExtraWorkPaymentHistoryDialog';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
@@ -67,12 +71,21 @@ const Accounts: React.FC = () => {
   const [vendorHistoryDialogOpen, setVendorHistoryDialogOpen] = useState(false);
   const [vendorHistoryStage, setVendorHistoryStage] = useState<{ id: string; stage: VendorPaymentStage } | null>(null);
 
+  // Vendor extra work dialogs
+  const [vendorExtraWorkDialogOpen, setVendorExtraWorkDialogOpen] = useState(false);
+  const [vendorExtraWorkProjectId, setVendorExtraWorkProjectId] = useState<string | null>(null);
+  const [vendorExtraWorkPaymentDialogOpen, setVendorExtraWorkPaymentDialogOpen] = useState(false);
+  const [selectedVendorExtraWork, setSelectedVendorExtraWork] = useState<{ id: string; projectId: string; description: string } | null>(null);
+  const [vendorExtraWorkHistoryOpen, setVendorExtraWorkHistoryOpen] = useState(false);
+  const [historyVendorExtraWork, setHistoryVendorExtraWork] = useState<{ id: string; description: string } | null>(null);
+
   // Budget tab
   const [budgetProjectId, setBudgetProjectId] = useState<string>('');
   const [budgetType, setBudgetType] = useState<'client' | 'vendor'>('client');
 
   const { payments, isLoading, totals } = useProjectPayments();
   const { payments: vendorPayments, isLoading: vendorLoading, totals: vendorTotals } = useVendorPayments();
+  const { extraWorks: vendorExtraWorks, isLoading: vendorExtraWorkLoading } = useVendorExtraWork();
   const { isAdmin, canViewAccounts } = useUserRole();
   const { projects } = useProjects();
 
@@ -413,6 +426,55 @@ const Accounts: React.FC = () => {
                             ))}
                           </div>
                         </div>
+                        {/* Vendor Extra Work Section */}
+                        <div className="mt-6 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-foreground">Extra Work</h4>
+                            {isAdmin && (
+                              <Button size="sm" variant="outline" onClick={() => { setVendorExtraWorkProjectId(project.project_id); setVendorExtraWorkDialogOpen(true); }}>
+                                <Plus className="w-4 h-4 mr-1" />Add Extra Work
+                              </Button>
+                            )}
+                          </div>
+                          {(() => {
+                            const projectVendorExtraWorks = vendorExtraWorks.filter(w => w.project_id === project.project_id);
+                            return projectVendorExtraWorks.length === 0 ? (
+                              <p className="text-sm text-muted-foreground py-4 text-center">No vendor extra work entries</p>
+                            ) : (
+                              <div className="grid gap-3">
+                                {projectVendorExtraWorks.map((work) => (
+                                  <div key={work.id} className="flex flex-col gap-3 p-4 rounded-lg border border-border/50 bg-card/60">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="min-w-0">
+                                        <p className="font-medium text-sm">{work.description}</p>
+                                        <p className="text-xs text-muted-foreground">Amount: {formatCurrency(work.amount)}</p>
+                                      </div>
+                                      <Badge className={getStatusColor(work.status)}>{work.status.charAt(0).toUpperCase() + work.status.slice(1)}</Badge>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                      <div className="p-2 rounded bg-muted/30">
+                                        <p className="text-xs text-muted-foreground mb-0.5">Paid</p>
+                                        <p className="font-medium">{formatCurrency(work.paid_amount)}</p>
+                                      </div>
+                                      <div className="p-2 rounded bg-muted/30">
+                                        <p className="text-xs text-muted-foreground mb-0.5">Balance</p>
+                                        <p className="font-medium">{formatCurrency(work.amount - work.paid_amount)}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 justify-end">
+                                      <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => { setHistoryVendorExtraWork({ id: work.id, description: work.description }); setVendorExtraWorkHistoryOpen(true); }}>
+                                        <History className="w-3 h-3 mr-1" />History
+                                      </Button>
+                                      <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => { setSelectedVendorExtraWork({ id: work.id, projectId: project.project_id, description: work.description }); setVendorExtraWorkPaymentDialogOpen(true); }} disabled={work.status === 'completed'}>
+                                        <Plus className="w-3 h-3 mr-1" />Add Payment
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </div>
                       </CardContent>
                     </CollapsibleContent>
                   </Card>
@@ -517,6 +579,9 @@ const Accounts: React.FC = () => {
       <SetVendorCostDialog open={vendorCostDialogOpen} onOpenChange={setVendorCostDialogOpen} projectId={vendorSelectedProjectId} currentCost={vendorPayments.find(p => p.project_id === vendorSelectedProjectId)?.total_cost || 0} />
       <RecordVendorPaymentDialog open={vendorPaymentDialogOpen} onOpenChange={setVendorPaymentDialogOpen} stageId={vendorSelectedStage?.id || ''} projectId={vendorSelectedStage?.projectId || ''} stageName={vendorSelectedStage ? vendorStageLabels[vendorSelectedStage.stage] : ''} />
       <VendorPaymentHistoryDialog open={vendorHistoryDialogOpen} onOpenChange={setVendorHistoryDialogOpen} stageId={vendorHistoryStage?.id || ''} stageName={vendorHistoryStage ? vendorStageLabels[vendorHistoryStage.stage] : ''} />
+      <AddVendorExtraWorkDialog open={vendorExtraWorkDialogOpen} onOpenChange={setVendorExtraWorkDialogOpen} projectId={vendorExtraWorkProjectId || ''} />
+      <RecordVendorExtraWorkPaymentDialog open={vendorExtraWorkPaymentDialogOpen} onOpenChange={setVendorExtraWorkPaymentDialogOpen} vendorExtraWorkId={selectedVendorExtraWork?.id || ''} projectId={selectedVendorExtraWork?.projectId || ''} />
+      <VendorExtraWorkPaymentHistoryDialog open={vendorExtraWorkHistoryOpen} onOpenChange={setVendorExtraWorkHistoryOpen} vendorExtraWorkId={historyVendorExtraWork?.id || ''} description={historyVendorExtraWork?.description || ''} />
     </div>
   );
 };

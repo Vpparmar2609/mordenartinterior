@@ -1026,6 +1026,97 @@ export type Database = {
           },
         ]
       }
+      vendor_extra_work: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          paid_amount: number
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          paid_amount?: number
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          paid_amount?: number
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_extra_work_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_extra_work_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string | null
+          proof_url: string | null
+          recorded_by: string
+          reference_number: string | null
+          vendor_extra_work_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          proof_url?: string | null
+          recorded_by: string
+          reference_number?: string | null
+          vendor_extra_work_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          proof_url?: string | null
+          recorded_by?: string
+          reference_number?: string | null
+          vendor_extra_work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_extra_work_payments_vendor_extra_work_id_fkey"
+            columns: ["vendor_extra_work_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_extra_work"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_payment_stages: {
         Row: {
           created_at: string
