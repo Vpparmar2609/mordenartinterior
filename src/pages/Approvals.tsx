@@ -17,6 +17,7 @@ import {
   FileImage,
   Download,
   Trash2,
+  Lock,
 } from 'lucide-react';
 import {
   Dialog,
@@ -287,9 +288,15 @@ const Approvals: React.FC = () => {
                                     <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => handlePreview(file)}>
                                       <Eye className="w-3 h-3 mr-1" /> View
                                     </Button>
-                                    <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => handleDownload(file)}>
-                                      <Download className="w-3 h-3 mr-1" /> Save
-                                    </Button>
+                                    {file.approval_status === 'approved' ? (
+                                      <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => handleDownload(file)}>
+                                        <Download className="w-3 h-3 mr-1" /> Save
+                                      </Button>
+                                    ) : (
+                                      <Button size="sm" variant="outline" className="h-8 px-3 text-xs opacity-50 cursor-not-allowed" disabled>
+                                        <Lock className="w-3 h-3 mr-1" /> Save
+                                      </Button>
+                                    )}
                                     {file.approval_status === 'pending' && (
                                       <>
                                         <Button

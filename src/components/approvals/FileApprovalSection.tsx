@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Download, Lock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -105,6 +106,22 @@ export const FileApprovalSection: React.FC<FileApprovalSectionProps> = ({
     setFileToReject(null);
   };
 
+  const handleDownload = async (file: PendingFile) => {
+    try {
+      const { data } = await supabase.storage
+        .from(bucketName)
+        .createSignedUrl(file.file_url, 60 * 60);
+      if (data?.signedUrl) {
+        const link = document.createElement('a');
+        link.href = data.signedUrl;
+        link.download = file.file_name;
+        link.click();
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   const renderFileCard = (file: PendingFile, showActions = true) => (
     <div
       key={file.id}
@@ -139,6 +156,20 @@ export const FileApprovalSection: React.FC<FileApprovalSectionProps> = ({
         >
           <Eye className="w-4 h-4" />
         </Button>
+        {file.approval_status === 'approved' ? (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            onClick={() => handleDownload(file)}
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+        ) : (
+          <Button size="icon" variant="ghost" className="h-8 w-8 opacity-40" disabled>
+            <Lock className="w-4 h-4" />
+          </Button>
+        )}
         {showActions && canApprove && file.approval_status === 'pending' && (
           <>
             <Button
