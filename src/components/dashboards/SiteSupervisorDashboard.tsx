@@ -107,7 +107,7 @@ export const SiteSupervisorDashboard: React.FC = () => {
           <AlertTriangle className="w-4 h-4 mr-2" />
           Report Issue
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => navigate('/execution-tasks')}>
           <Camera className="w-4 h-4 mr-2" />
           Upload Photos
         </Button>

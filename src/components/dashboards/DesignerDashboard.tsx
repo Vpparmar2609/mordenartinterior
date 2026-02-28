@@ -14,7 +14,8 @@ import {
   Upload,
   FileImage,
   Timer,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 
 interface ProjectAssignment {
@@ -70,6 +71,8 @@ export const DesignerDashboard: React.FC = () => {
   const { projects, isLoading } = useProjects();
   const [projectAssignments, setProjectAssignments] = useState<Record<string, ProjectAssignment>>({});
   const [designTasks, setDesignTasks] = useState<any[]>([]);
+  const [recentFiles, setRecentFiles] = useState<any[]>([]);
+  const [filesLoading, setFilesLoading] = useState(false);
 
   // Fetch projects assigned to this designer via project_team with assignment dates
   useEffect(() => {
@@ -114,6 +117,35 @@ export const DesignerDashboard: React.FC = () => {
 
     fetchTasks();
   }, [myProjectIds.join(',')]);
+
+  // Fetch recent uploaded files
+  useEffect(() => {
+    const fetchRecentFiles = async () => {
+      if (!user || myProjectIds.length === 0) return;
+      setFilesLoading(true);
+      
+      // Get task IDs for my projects
+      const taskIds = designTasks.map(t => t.id);
+      if (taskIds.length === 0) {
+        setFilesLoading(false);
+        return;
+      }
+      
+      const { data } = await supabase
+        .from('design_task_files')
+        .select('*, design_tasks!inner(name, project_id)')
+        .eq('uploaded_by', user.id)
+        .order('uploaded_at', { ascending: false })
+        .limit(5);
+
+      if (data) {
+        setRecentFiles(data);
+      }
+      setFilesLoading(false);
+    };
+
+    fetchRecentFiles();
+  }, [user, designTasks.length]);
 
   const myProjects = projects.filter(p => myProjectIds.includes(p.id));
   const completedTasks = designTasks.filter(t => t.status === 'completed').length;
@@ -288,7 +320,33 @@ export const DesignerDashboard: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-sm text-center py-4">No recent uploads</p>
+            {filesLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : recentFiles.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-4">No recent uploads</p>
+            ) : (
+              <div className="space-y-2">
+                {recentFiles.map(file => (
+                  <div key={file.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{file.file_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(file as any).design_tasks?.name || 'Task'} • {new Date(file.uploaded_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      file.approval_status === 'approved' ? 'bg-success/20 text-success' :
+                      file.approval_status === 'rejected' ? 'bg-destructive/20 text-destructive' :
+                      'bg-warning/20 text-warning'
+                    }`}>
+                      {file.approval_status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
