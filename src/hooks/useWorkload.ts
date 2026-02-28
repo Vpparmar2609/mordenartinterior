@@ -28,26 +28,33 @@ export const useWorkload = (roles?: AppRole[]) => {
 
       if (projectError) throw projectError;
 
-      // Build workload map
+      // Build workload map - track unique (user_id, project_id) pairs to avoid double-counting
+      const assignmentSet = new Set<string>();
       const workloadMap = new Map<string, number>();
+
+      const addAssignment = (userId: string, projectId: string) => {
+        const key = `${userId}:${projectId}`;
+        if (assignmentSet.has(key)) return;
+        assignmentSet.add(key);
+        const currentCount = workloadMap.get(userId) || 0;
+        workloadMap.set(userId, currentCount + 1);
+      };
 
       // Count project_team assignments
       teamData?.forEach(item => {
         if (!roles || roles.includes(item.role)) {
-          const currentCount = workloadMap.get(item.user_id) || 0;
-          workloadMap.set(item.user_id, currentCount + 1);
+          addAssignment(item.user_id, item.project_id);
         }
       });
 
-      // Count direct head assignments from projects
+      // Count direct head assignments from projects (design_head_id only, since execution_manager is now in project_team)
       projectData?.forEach(project => {
         if (project.design_head_id) {
-          const currentCount = workloadMap.get(project.design_head_id) || 0;
-          workloadMap.set(project.design_head_id, currentCount + 1);
+          addAssignment(project.design_head_id, project.id);
         }
+        // Still count execution_manager_id for backward compat
         if (project.execution_manager_id) {
-          const currentCount = workloadMap.get(project.execution_manager_id) || 0;
-          workloadMap.set(project.execution_manager_id, currentCount + 1);
+          addAssignment(project.execution_manager_id, project.id);
         }
       });
 

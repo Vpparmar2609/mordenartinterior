@@ -76,6 +76,31 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
   const [newDesignerId, setNewDesignerId] = useState<string>('');
   const [addingSupervisor, setAddingSupervisor] = useState(false);
   const [newSupervisorId, setNewSupervisorId] = useState<string>('');
+  const [addingExecutionManager, setAddingExecutionManager] = useState(false);
+  const [newExecutionManagerId, setNewExecutionManagerId] = useState<string>('');
+
+  const handleAddExecutionManager = async () => {
+    if (!newExecutionManagerId) return;
+    await assignMember.mutateAsync({ userId: newExecutionManagerId, role: 'execution_manager' });
+    // Keep execution_manager_id on projects table in sync (set to first one if not set)
+    if (!executionManagerId) {
+      await updateProject.mutateAsync({ id: projectId, execution_manager_id: newExecutionManagerId });
+    }
+    setAddingExecutionManager(false);
+    setNewExecutionManagerId('');
+  };
+
+  const handleRemoveExecutionManager = async (userId: string) => {
+    await removeMember.mutateAsync({ userId, role: 'execution_manager' });
+    // If removed the primary execution_manager_id, update to another or null
+    if (executionManagerId === userId) {
+      const remaining = getMembersByRole('execution_manager').filter(m => m.user_id !== userId);
+      await updateProject.mutateAsync({ 
+        id: projectId, 
+        execution_manager_id: remaining.length > 0 ? remaining[0].user_id : null 
+      });
+    }
+  };
 
   const handleAddSupervisor = async () => {
     if (!newSupervisorId) return;
@@ -475,16 +500,114 @@ export const TeamAssignmentSection: React.FC<TeamAssignmentSectionProps> = ({
           );
         })()}
 
-        {/* Execution Manager - Only admin can change */}
-        {renderHeadRow(
-          'Execution Manager',
-          <Users className="w-4 h-4" />,
-          executionManagerId,
-          executionManagerProfile,
-          'execution_manager_id',
-          'execution_manager',
-          isAdmin
-        )}
+        {/* Execution Managers - Multiple allowed, Admin can assign */}
+        {(() => {
+          const assignedManagers = getMembersByRole('execution_manager');
+          const availableManagers = getAvailableUsers('execution_manager');
+          const assignedIds = assignedManagers.map(d => d.user_id);
+          const unassignedManagers = availableManagers.filter(u => !assignedIds.includes(u.id));
+          const canManageEMs = isAdmin;
+
+          return (
+            <div className="p-3 rounded-lg bg-muted/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-accent"><Users className="w-4 h-4" /></span>
+                  <span className="font-medium text-sm">Execution Managers</span>
+                  <Badge variant="secondary" className="text-xs">{assignedManagers.length}</Badge>
+                </div>
+                {canManageEMs && !addingExecutionManager && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => setAddingExecutionManager(true)}>
+                    <UserPlus className="w-3 h-3 mr-1" />
+                    Add
+                  </Button>
+                )}
+              </div>
+
+              {assignedManagers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No execution managers assigned</p>
+              ) : (
+                <div className="space-y-2">
+                  {assignedManagers.map(member => (
+                    <div key={member.id} className="flex items-center gap-2 pl-1">
+                      <Avatar className="h-7 w-7 shrink-0 bg-gradient-warm">
+                        <AvatarFallback className="bg-transparent text-xs text-primary-foreground">
+                          {member.profile?.name.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-xs truncate">{member.profile?.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{member.profile?.email}</p>
+                      </div>
+                      <Badge variant="outline" className="text-xs gap-1 shrink-0">
+                        <Briefcase className="w-3 h-3" />
+                        {getWorkloadForUser(member.user_id)}
+                      </Badge>
+                      {canManageEMs && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0 text-destructive hover:text-destructive">
+                              <X className="w-3.5 h-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="mx-4">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove execution manager?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will remove {member.profile?.name} from this project.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRemoveExecutionManager(member.user_id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {addingExecutionManager && (
+                <div className="space-y-2 pt-1">
+                  {unassignedManagers.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">All execution managers are already assigned to this project.</p>
+                  ) : (
+                    <Select value={newExecutionManagerId} onValueChange={setNewExecutionManagerId}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select execution manager..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unassignedManagers.map(u => (
+                          <SelectItem key={u.id} value={u.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{u.name}</span>
+                              {renderWorkloadBadge(u.id)}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <div className="flex gap-2">
+                    <Button size="sm" className="flex-1" onClick={handleAddExecutionManager} disabled={assignMember.isPending || !newExecutionManagerId}>
+                      {assignMember.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setAddingExecutionManager(false); setNewExecutionManagerId(''); }}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Site Supervisors - Multiple allowed, Execution Manager or Admin can assign */}
         {(() => {
