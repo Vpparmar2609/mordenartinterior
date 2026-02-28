@@ -175,4 +175,49 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* GPU-accelerated smooth transitions */
+  .gpu-accelerated {
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+}
+
+/* Smooth scrolling everywhere */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent layout shift from scrollbar */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Mobile tap targets — min 44px */
+@media (max-width: 768px) {
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Faster animations on mobile */
+  *, *::before, *::after {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.15s !important;
+  }
+}
+
+/* Skeleton shimmer for perceived speed */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.08) 50%, hsl(var(--muted)) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }

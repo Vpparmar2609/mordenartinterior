@@ -26,8 +26,9 @@ const ProfilePage = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  <div className="flex items-center justify-center min-h-[50vh] gap-3">
+    <div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin will-change-transform" />
+    <span className="text-sm text-muted-foreground animate-pulse">Loading…</span>
   </div>
 );
 

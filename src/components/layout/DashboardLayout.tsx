@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sidebar } from './Sidebar';
@@ -21,9 +21,16 @@ export const DashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-background overflow-x-hidden">
       <Sidebar />
-      <main id="main-content" role="main" className="md:ml-64 min-h-screen min-h-[100dvh]">
+      <main id="main-content" role="main" className="md:ml-64 min-h-screen min-h-[100dvh] gpu-accelerated">
         <div className="p-3 sm:p-4 md:p-8 pt-16 md:pt-8 max-w-full">
-          <Outlet />
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[50vh] gap-3">
+              <div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin will-change-transform" />
+              <span className="text-sm text-muted-foreground animate-pulse">Loading…</span>
+            </div>
+          }>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
     </div>
