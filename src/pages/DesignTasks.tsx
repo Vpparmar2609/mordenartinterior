@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Search, 
-  Upload, 
   CheckCircle2, 
   Clock,
-  FileImage,
   ChevronDown,
   ChevronRight,
   Loader2,
@@ -24,16 +22,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { TaskFileUpload } from '@/components/tasks/TaskFileUpload';
 import { FileApprovalSection } from '@/components/approvals/FileApprovalSection';
-import { supabase } from '@/integrations/supabase/client';
-import { differenceInDays, addDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
+import { DesignTimelineEditor } from '@/components/tasks/DesignTimelineEditor';
 
-const DESIGN_DEADLINE_DAYS = 20;
-
-const getDesignDaysLeft = (assignedAt: string) => {
-  const assignedDate = new Date(assignedAt);
-  const designDeadline = addDays(assignedDate, DESIGN_DEADLINE_DAYS);
+const getDesignDaysLeft = (startDate: string | null, endDate: string | null) => {
+  if (!startDate || !endDate) return null;
+  const deadline = new Date(endDate);
   const today = new Date();
-  return differenceInDays(designDeadline, today);
+  return differenceInDays(deadline, today);
+};
+
+const getTotalDesignDays = (startDate: string | null, endDate: string | null) => {
+  if (!startDate || !endDate) return null;
+  return differenceInDays(new Date(endDate), new Date(startDate));
 };
 
 const getTimelineDisplay = (daysLeft: number | null) => {
@@ -75,36 +76,16 @@ const getTimelineDisplay = (daysLeft: number | null) => {
 const DesignTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
-  const [projectAssignments, setProjectAssignments] = useState<Record<string, string>>({});
   const { user, role } = useAuth();
   const { isAdmin, isDesignHead } = useUserRole();
-  const { projects, isLoading: projectsLoading } = useProjects();
+  const { projects, isLoading: projectsLoading, updateProject } = useProjects();
   const { tasks: allTasks, isLoading: tasksLoading, updateTask } = useAllDesignTasks();
   const canApproveFiles = isAdmin || isDesignHead;
+  const canEditTimeline = isAdmin || isDesignHead;
 
-  // Fetch designer assignments for all projects
-  useEffect(() => {
-    const fetchAssignments = async () => {
-      const projectIds = projects.map(p => p.id);
-      if (projectIds.length === 0) return;
-
-      const { data } = await supabase
-        .from('project_team')
-        .select('project_id, assigned_at')
-        .in('project_id', projectIds)
-        .eq('role', 'designer');
-
-      if (data) {
-        const assignments: Record<string, string> = {};
-        data.forEach(d => {
-          assignments[d.project_id] = d.assigned_at;
-        });
-        setProjectAssignments(assignments);
-      }
-    };
-
-    fetchAssignments();
-  }, [projects]);
+  const handleSaveTimeline = (projectId: string, startDate: string, endDate: string) => {
+    updateProject.mutate({ id: projectId, design_start_date: startDate, design_end_date: endDate } as any);
+  };
 
   // Group tasks by project
   const projectsWithTasks = useMemo(() => {
@@ -121,8 +102,10 @@ const DesignTasks: React.FC = () => {
       const project = projects.find(p => p.id === projectId);
       const completed = tasks.filter(t => t.status === 'completed').length;
       const totalTasks = 36; // 36 design tasks per project
-      const assignedAt = projectAssignments[projectId];
-      const daysLeft = assignedAt ? getDesignDaysLeft(assignedAt) : null;
+      const designStartDate = (project as any)?.design_start_date || null;
+      const designEndDate = (project as any)?.design_end_date || null;
+      const daysLeft = getDesignDaysLeft(designStartDate, designEndDate);
+      const totalDays = getTotalDesignDays(designStartDate, designEndDate);
       
       const progressPct = Math.round((completed / totalTasks) * 100);
       const allDone = completed === totalTasks;
@@ -133,13 +116,15 @@ const DesignTasks: React.FC = () => {
         progress: progressPct,
         tasks: tasks.sort((a, b) => a.order_index - b.order_index),
         totalTasks,
+        designStartDate,
+        designEndDate,
         // Freeze timeline when all tasks are completed
         daysLeft: allDone ? null : daysLeft,
         allDone,
-        timeProgress: daysLeft !== null && !allDone ? Math.min(100, Math.max(0, ((DESIGN_DEADLINE_DAYS - daysLeft) / DESIGN_DEADLINE_DAYS) * 100)) : 0,
+        timeProgress: daysLeft !== null && totalDays !== null && !allDone ? Math.min(100, Math.max(0, ((totalDays - daysLeft) / totalDays) * 100)) : 0,
       };
     });
-  }, [allTasks, projects, projectAssignments]);
+  }, [allTasks, projects]);
 
   // Filter based on search
   const filteredProjects = projectsWithTasks.filter(p =>
@@ -289,6 +274,17 @@ const DesignTasks: React.FC = () => {
                 <p className="text-sm text-muted-foreground mt-1">
                   {project.tasks.filter(t => t.status === 'completed').length}/{project.totalTasks} tasks completed
                 </p>
+                {canEditTimeline && (
+                  <div className="mt-1">
+                    <DesignTimelineEditor
+                      projectId={project.id}
+                      currentStartDate={project.designStartDate}
+                      currentEndDate={project.designEndDate}
+                      onSave={handleSaveTimeline}
+                      isSaving={updateProject.isPending}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
