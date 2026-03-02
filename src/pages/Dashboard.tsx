@@ -4,6 +4,7 @@ import { roleLabels } from '@/types/auth';
 import { SplineScene } from '@/components/ui/splite';
 import { Card } from '@/components/ui/card';
 import { Spotlight } from '@/components/ui/spotlight';
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 
 // Unified dashboard for most roles
 import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
@@ -84,8 +85,8 @@ const Dashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-pulse text-muted-foreground">Loading dashboard...</div>
+      <div className="space-y-6">
+        <DashboardSkeleton />
       </div>
     );
   }
