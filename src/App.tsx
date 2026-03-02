@@ -35,10 +35,12 @@ const PageLoader = () => (
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2, // 2 minutes — reduces refetches across 80+ users
-      gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
-      refetchOnWindowFocus: false, // prevent refetch storms when switching tabs
-      retry: 1, // reduce retry overhead
+      staleTime: 1000 * 60 * 3, // 3 minutes — reduces refetches
+      gcTime: 1000 * 60 * 15, // 15 minutes garbage collection
+      refetchOnWindowFocus: false, // prevent refetch storms
+      refetchOnReconnect: 'always', // refresh after network recovery
+      retry: 1,
+      networkMode: 'offlineFirst', // serve cache instantly, revalidate in bg
     },
   },
 });
