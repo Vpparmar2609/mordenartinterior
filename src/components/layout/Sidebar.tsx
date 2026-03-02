@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { prefetchRoute } from '@/utils/routePrefetch';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, roleLabels } from '@/types/auth';
 import { Button } from '@/components/ui/button';
@@ -169,9 +170,11 @@ const SidebarContent: React.FC<SidebarProps> = ({ open, onClose }) => {
             key={item.href}
             to={item.href}
             onClick={handleNavClick}
+            onMouseEnter={() => prefetchRoute(item.href)}
+            onFocus={() => prefetchRoute(item.href)}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                 isActive
                   ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg'
                   : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
