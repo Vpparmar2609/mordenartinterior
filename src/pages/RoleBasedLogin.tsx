@@ -7,8 +7,8 @@ import { useAuth, UserRole } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { RoleCard } from '@/components/auth/RoleCard';
 import { roleLabels } from '@/types/auth';
+import brandLogo from '@/assets/brand-logo.png';
 import { 
-  Building2,
   Mail,
   Lock,
   ArrowRight,
@@ -136,9 +136,7 @@ const RoleBasedLogin: React.FC = () => {
       <div className="relative min-h-screen flex flex-col items-center justify-center p-6">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex p-4 rounded-2xl bg-gradient-warm mb-4 shadow-lg">
-            <Building2 className="w-10 h-10 text-primary-foreground" />
-          </div>
+          <img src={brandLogo} alt="Modern Art Interior" className="w-16 h-16 rounded-2xl shadow-lg mb-2" />
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">
             Modern Art Interior
           </h1>
