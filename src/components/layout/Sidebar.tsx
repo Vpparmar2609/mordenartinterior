@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { prefetchRoute } from '@/utils/routePrefetch';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/hooks/useTheme';
 import { UserRole, roleLabels } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -23,6 +24,8 @@ import {
   IndianRupee,
   Menu,
   X,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -115,6 +118,7 @@ interface SidebarProps {
 
 const SidebarContent: React.FC<SidebarProps> = ({ open, onClose }) => {
   const { profile, role, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -211,15 +215,24 @@ const SidebarContent: React.FC<SidebarProps> = ({ open, onClose }) => {
             </p>
           </div>
         </NavLink>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-destructive"
-          onClick={handleLogout}
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Sign Out
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-1 justify-start text-muted-foreground hover:text-destructive"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
     </aside>
   );

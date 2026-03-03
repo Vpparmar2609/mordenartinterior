@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2 } from 'lucide-react';
+import brandLogo from '@/assets/brand-logo.png';
 
 const LoginPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -22,9 +22,7 @@ const LoginPage: React.FC = () => {
         {/* Left side - Branding */}
         <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 relative">
           <div className="max-w-lg text-center">
-            <div className="inline-flex p-4 rounded-2xl bg-gradient-warm mb-8 shadow-lg">
-              <Building2 className="w-12 h-12 text-primary-foreground" />
-            </div>
+            <img src={brandLogo} alt="Modern Art Interior" className="w-16 h-16 rounded-2xl shadow-lg mb-2" />
             
             <h1 className="font-display text-5xl font-bold text-foreground mb-4 leading-tight">
               Modern Art
@@ -55,9 +53,7 @@ const LoginPage: React.FC = () => {
         {/* Right side - Login Form */}
         <div className="flex-1 flex flex-col justify-center items-center p-8 lg:p-12">
           <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex p-3 rounded-xl bg-gradient-warm mb-4">
-              <Building2 className="w-8 h-8 text-primary-foreground" />
-            </div>
+            <img src={brandLogo} alt="Modern Art Interior" className="w-12 h-12 rounded-xl shadow-lg mb-2" />
             <h1 className="font-display text-2xl font-semibold text-foreground">
               Modern Art Interior
             </h1>
