@@ -22,7 +22,7 @@ const LoginPage: React.FC = () => {
         {/* Left side - Branding */}
         <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 relative">
           <div className="max-w-lg text-center">
-            <img src={brandLogo} alt="Modern Art Interior" className="w-16 h-16 rounded-2xl shadow-lg mb-2" />
+            <img src={brandLogo} alt="Modern Art Interior" className="w-16 h-16 rounded-2xl shadow-lg mb-4 object-contain" />
             
             <h1 className="font-display text-5xl font-bold text-foreground mb-4 leading-tight">
               Modern Art
@@ -52,8 +52,8 @@ const LoginPage: React.FC = () => {
 
         {/* Right side - Login Form */}
         <div className="flex-1 flex flex-col justify-center items-center p-8 lg:p-12">
-          <div className="lg:hidden text-center mb-8">
-            <img src={brandLogo} alt="Modern Art Interior" className="w-12 h-12 rounded-xl shadow-lg mb-2" />
+          <div className="lg:hidden text-center mb-8 flex flex-col items-center">
+            <img src={brandLogo} alt="Modern Art Interior" className="w-12 h-12 rounded-xl shadow-lg mb-4 object-contain" />
             <h1 className="font-display text-2xl font-semibold text-foreground">
               Modern Art Interior
             </h1>

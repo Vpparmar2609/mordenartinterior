@@ -135,8 +135,8 @@ const RoleBasedLogin: React.FC = () => {
       
       <div className="relative min-h-screen flex flex-col items-center justify-center p-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <img src={brandLogo} alt="Modern Art Interior" className="w-16 h-16 rounded-2xl shadow-lg mb-2" />
+        <div className="text-center mb-8 flex flex-col items-center">
+          <img src={brandLogo} alt="Modern Art Interior" className="w-16 h-16 rounded-2xl shadow-lg mb-4 object-contain" />
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">
             Modern Art Interior
           </h1>
