@@ -8,12 +8,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { RoleCard } from '@/components/auth/RoleCard';
 import { roleLabels } from '@/types/auth';
 import brandLogo from '@/assets/brand-logo.png';
+import { useTheme } from '@/hooks/useTheme';
 import { 
   Mail,
   Lock,
   ArrowRight,
   ArrowLeft,
-  AlertCircle
+  AlertCircle,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
