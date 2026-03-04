@@ -158,9 +158,16 @@ const Dashboard: React.FC = () => {
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              <span>Online</span>
+            <div className="flex items-center gap-3">
+              {/* Live clock */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/60 border border-border/30 backdrop-blur-sm">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-mono font-medium text-foreground tabular-nums">{timeString}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                <span>Online</span>
+              </div>
             </div>
           </div>
 
