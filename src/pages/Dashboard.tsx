@@ -80,8 +80,16 @@ const getMotivationalMessage = (role: string | null) => {
   return pool[dayOfYear % pool.length];
 };
 
+const WORKDAY_END_HOUR = 19; // 7 PM
+
 const Dashboard: React.FC = () => {
   const { profile, role, isLoading } = useAuth();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (isLoading) {
     return (
@@ -93,6 +101,21 @@ const Dashboard: React.FC = () => {
 
   const { greeting, emoji } = getGreeting();
   const motivationalMessage = getMotivationalMessage(role);
+
+  // Live clock helpers
+  const timeString = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+  
+  const getWorkdayCountdown = () => {
+    const endOfDay = new Date(now);
+    endOfDay.setHours(WORKDAY_END_HOUR, 0, 0, 0);
+    const diff = endOfDay.getTime() - now.getTime();
+    if (diff <= 0) return null; // workday is over
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    return { hours, minutes };
+  };
+
+  const countdown = getWorkdayCountdown();
 
   const renderDashboard = () => {
     if (!role) {
