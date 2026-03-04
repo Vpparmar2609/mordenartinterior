@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { roleLabels } from '@/types/auth';
 import { Card } from '@/components/ui/card';
 import { Spotlight } from '@/components/ui/spotlight';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
-import { Sparkles, TrendingUp, Clock, Zap } from 'lucide-react';
+import { Sparkles, TrendingUp, Clock, Zap, Timer } from 'lucide-react';
 
 // Unified dashboard for most roles
 import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
@@ -80,8 +80,16 @@ const getMotivationalMessage = (role: string | null) => {
   return pool[dayOfYear % pool.length];
 };
 
+const WORKDAY_END_HOUR = 19; // 7 PM
+
 const Dashboard: React.FC = () => {
   const { profile, role, isLoading } = useAuth();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (isLoading) {
     return (
@@ -93,6 +101,21 @@ const Dashboard: React.FC = () => {
 
   const { greeting, emoji } = getGreeting();
   const motivationalMessage = getMotivationalMessage(role);
+
+  // Live clock helpers
+  const timeString = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+  
+  const getWorkdayCountdown = () => {
+    const endOfDay = new Date(now);
+    endOfDay.setHours(WORKDAY_END_HOUR, 0, 0, 0);
+    const diff = endOfDay.getTime() - now.getTime();
+    if (diff <= 0) return null; // workday is over
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    return { hours, minutes };
+  };
+
+  const countdown = getWorkdayCountdown();
 
   const renderDashboard = () => {
     if (!role) {
@@ -135,9 +158,16 @@ const Dashboard: React.FC = () => {
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              <span>Online</span>
+            <div className="flex items-center gap-3">
+              {/* Live clock */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/60 border border-border/30 backdrop-blur-sm">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-mono font-medium text-foreground tabular-nums">{timeString}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                <span>Online</span>
+              </div>
             </div>
           </div>
 
@@ -183,6 +213,19 @@ const Dashboard: React.FC = () => {
                 {label}
               </div>
             ))}
+            {/* Workday countdown pill */}
+            {countdown && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm text-xs text-primary transition-all duration-300 hover:bg-primary/15 cursor-default">
+                <Timer className="w-3.5 h-3.5" />
+                <span className="font-mono tabular-nums">{countdown.hours}h {countdown.minutes}m left</span>
+              </div>
+            )}
+            {!countdown && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10 border border-success/20 backdrop-blur-sm text-xs text-success cursor-default">
+                <Clock className="w-3.5 h-3.5" />
+                Workday complete 🎉
+              </div>
+            )}
           </div>
         </div>
       </Card>
