@@ -1,10 +1,10 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { roleLabels } from '@/types/auth';
-import { SplineScene } from '@/components/ui/splite';
 import { Card } from '@/components/ui/card';
 import { Spotlight } from '@/components/ui/spotlight';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import { Sparkles, TrendingUp, Clock, Zap } from 'lucide-react';
 
 // Unified dashboard for most roles
 import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
@@ -115,59 +115,74 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Fancy Motivational Hero */}
-      <Card className="w-full overflow-hidden relative min-h-[280px] md:min-h-[360px]">
+      {/* Motivational Hero — clean, animated, responsive */}
+      <Card className="w-full overflow-hidden relative group">
+        {/* Animated background layers */}
         <Spotlight
           className="-top-40 left-0 md:left-60 md:-top-20"
           fill="hsl(var(--primary))"
         />
-        <div className="flex flex-col md:flex-row h-full">
-          {/* Left content */}
-          <div className="flex-1 p-6 md:p-10 relative z-10 flex flex-col justify-center">
-            {/* Emoji + time-of-day chip */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">{emoji}</span>
-              <span className="text-xs font-medium px-3 py-1 rounded-full bg-primary/15 text-primary border border-primary/20">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-64 h-64 md:w-80 md:h-80 bg-primary/8 rounded-full blur-3xl animate-pulse-glow pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-48 h-48 md:w-64 md:h-64 bg-accent/8 rounded-full blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '1.5s' }} />
+
+        <div className="relative z-10 p-5 sm:p-8 md:p-10">
+          {/* Top row: date chip + status */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl sm:text-3xl animate-float">{emoji}</span>
+              <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 backdrop-blur-sm">
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
             </div>
-
-            {/* Main greeting */}
-            <h1 className="text-3xl md:text-5xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground via-foreground/90 to-muted-foreground leading-tight">
-              {greeting},<br />
-              <span className="text-primary">{profile?.name?.split(' ')[0] || 'there'}</span>
-            </h1>
-
-            {/* Role badge */}
-            <div className="flex items-center gap-2 mt-3">
-              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
-                {role ? roleLabels[role] : 'Team Member'}
-              </span>
-            </div>
-
-            {/* Motivational quote with decorative line */}
-            <div className="mt-5 relative">
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary to-primary/0 rounded-full" />
-              <p className="pl-4 text-sm md:text-base text-muted-foreground italic leading-relaxed max-w-md">
-                {motivationalMessage}
-              </p>
-            </div>
-
-            {/* Time display */}
-            <div className="mt-6 flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
-                <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                You're on time
-              </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              <span>Online</span>
             </div>
           </div>
 
-          {/* Right 3D content */}
-          <div className="flex-1 relative min-h-[180px] md:min-h-[280px]">
-            <SplineScene 
-              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-              className="w-full h-full"
-            />
+          {/* Greeting */}
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-display font-bold leading-tight tracking-tight">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground">
+              {greeting},
+            </span>
+            <br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+              {profile?.name?.split(' ')[0] || 'there'}
+            </span>
+          </h1>
+
+          {/* Role badge */}
+          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/60 border border-border/40 backdrop-blur-sm">
+            <Sparkles className="w-3 h-3 text-primary" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              {role ? roleLabels[role] : 'Team Member'}
+            </span>
+          </div>
+
+          {/* Motivational quote */}
+          <div className="mt-5 relative max-w-lg">
+            <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full bg-gradient-to-b from-primary via-primary/50 to-transparent" />
+            <p className="pl-4 text-sm sm:text-base text-muted-foreground italic leading-relaxed">
+              {motivationalMessage}
+            </p>
+          </div>
+
+          {/* Quick stat pills */}
+          <div className="mt-6 flex flex-wrap gap-2 sm:gap-3">
+            {[
+              { icon: Clock, label: 'On Time', color: 'text-success' },
+              { icon: TrendingUp, label: 'Productive', color: 'text-primary' },
+              { icon: Zap, label: 'Ready', color: 'text-warning' },
+            ].map(({ icon: Icon, label, color }) => (
+              <div
+                key={label}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/60 border border-border/30 backdrop-blur-sm text-xs text-muted-foreground transition-all duration-300 hover:border-primary/30 hover:bg-primary/5 active:scale-95 cursor-default"
+              >
+                <Icon className={`w-3.5 h-3.5 ${color}`} />
+                {label}
+              </div>
+            ))}
           </div>
         </div>
       </Card>
