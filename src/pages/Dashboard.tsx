@@ -213,6 +213,19 @@ const Dashboard: React.FC = () => {
                 {label}
               </div>
             ))}
+            {/* Workday countdown pill */}
+            {countdown && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm text-xs text-primary transition-all duration-300 hover:bg-primary/15 cursor-default">
+                <Timer className="w-3.5 h-3.5" />
+                <span className="font-mono tabular-nums">{countdown.hours}h {countdown.minutes}m left</span>
+              </div>
+            )}
+            {!countdown && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10 border border-success/20 backdrop-blur-sm text-xs text-success cursor-default">
+                <Clock className="w-3.5 h-3.5" />
+                Workday complete 🎉
+              </div>
+            )}
           </div>
         </div>
       </Card>
