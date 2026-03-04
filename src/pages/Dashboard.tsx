@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { roleLabels } from '@/types/auth';
 import { Card } from '@/components/ui/card';
 import { Spotlight } from '@/components/ui/spotlight';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
-import { Sparkles, TrendingUp, Clock, Zap } from 'lucide-react';
+import { Sparkles, TrendingUp, Clock, Zap, Timer } from 'lucide-react';
 
 // Unified dashboard for most roles
 import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
