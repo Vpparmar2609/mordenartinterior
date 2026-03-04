@@ -8,6 +8,7 @@ import brandLogo from '@/assets/brand-logo.png';
 
 const LoginPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -15,6 +16,15 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-4 right-4 z-10 p-2.5 rounded-xl bg-card/60 backdrop-blur-sm border border-border/50 text-muted-foreground hover:text-foreground transition-colors"
+        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
+
       {/* Background gradient effects */}
       <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />
       <div className="absolute top-1/4 -right-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-glow" />
