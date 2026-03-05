@@ -196,10 +196,6 @@ const ProjectDetail: React.FC = () => {
                   <p className="font-medium">{project.flat_size}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Budget</p>
-                  <p className="font-medium">{project.budget_range}</p>
-                </div>
-                <div>
                   <p className="text-sm text-muted-foreground">Location</p>
                   <p className="font-medium">{project.location}</p>
                 </div>
