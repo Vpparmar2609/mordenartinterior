@@ -30,6 +30,8 @@ import { CreateUrgentTaskDialog } from '@/components/tasks/CreateUrgentTaskDialo
 import { UrgentTasksList } from '@/components/tasks/UrgentTasksList';
 import { useMyUrgentTasks } from '@/hooks/useUrgentTasks';
 import { ExecutionTimelineEditor } from '@/components/tasks/ExecutionTimelineEditor';
+import { CustomTasksSection } from '@/components/tasks/CustomTasksSection';
+import { CreateCategoryTaskDialog } from '@/components/tasks/CreateCategoryTaskDialog';
 
 const ExecutionTasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -400,6 +402,7 @@ const ExecutionTasks: React.FC = () => {
           <TabsList>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="approvals">Photo Approvals</TabsTrigger>
+            <TabsTrigger value="urgent-tasks">Urgent Tasks</TabsTrigger>
           </TabsList>
           
           <TabsContent value="tasks" className="space-y-4">
@@ -428,6 +431,17 @@ const ExecutionTasks: React.FC = () => {
           
           <TabsContent value="approvals">
             <FileApprovalSection type="execution" />
+          </TabsContent>
+          <TabsContent value="urgent-tasks" className="space-y-4">
+            <div className="flex justify-end">
+              <CreateCategoryTaskDialog category="execution" />
+            </div>
+            <CustomTasksSection
+              category="execution"
+              canCreate={isAdmin || isExecutionManager}
+              canApprove={isAdmin || isExecutionManager}
+              showProjectGrouping
+            />
           </TabsContent>
         </Tabs>
       ) : (

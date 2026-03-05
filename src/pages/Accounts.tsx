@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { MilestoneProgressBar } from '@/components/accounts/MilestoneProgressBar';
 import { 
   IndianRupee, Search, ChevronDown, ChevronUp, Plus, Loader2,
-  History, CreditCard, Users, Truck
+  History, CreditCard, Users, Truck, ListTodo
 } from 'lucide-react';
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
@@ -33,6 +33,8 @@ import { useVendorExtraWork } from '@/hooks/useVendorExtraWork';
 import { AddVendorExtraWorkDialog } from '@/components/accounts/AddVendorExtraWorkDialog';
 import { RecordVendorExtraWorkPaymentDialog } from '@/components/accounts/RecordVendorExtraWorkPaymentDialog';
 import { VendorExtraWorkPaymentHistoryDialog } from '@/components/accounts/VendorExtraWorkPaymentHistoryDialog';
+import { CustomTasksSection } from '@/components/tasks/CustomTasksSection';
+import { CreateCategoryTaskDialog } from '@/components/tasks/CreateCategoryTaskDialog';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
@@ -154,6 +156,9 @@ const Accounts: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="budget" className="flex-1 sm:flex-none">
             <CreditCard className="w-3 h-3 mr-1" />Budget
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className="flex-1 sm:flex-none">
+            <ListTodo className="w-3 h-3 mr-1" />Tasks
           </TabsTrigger>
         </TabsList>
 
