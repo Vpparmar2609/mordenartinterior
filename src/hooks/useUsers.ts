@@ -98,6 +98,32 @@ export const useUsers = () => {
     },
   });
 
+  const deleteUser = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: userId },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: 'User removed',
+        description: 'User has been permanently removed from the system.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   const getUsersByRole = (role: UserRole) => {
     return usersQuery.data?.filter(u => u.role === role) ?? [];
   };
@@ -108,6 +134,7 @@ export const useUsers = () => {
     error: usersQuery.error,
     assignRole,
     removeUserRole,
+    deleteUser,
     getUsersByRole,
     refetch: usersQuery.refetch,
   };

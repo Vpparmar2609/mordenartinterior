@@ -70,8 +70,9 @@ const Team: React.FC = () => {
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
-  const { users, isLoading, assignRole, removeUserRole, refetch } = useUsers();
+  const { users, isLoading, assignRole, removeUserRole, deleteUser, refetch } = useUsers();
   const { role: currentUserRole } = useAuth();
 
   const isAdmin = currentUserRole === 'admin';
@@ -117,6 +118,18 @@ const Team: React.FC = () => {
       toast.error('Failed to remove user role.');
     } finally {
       setRemovingUserId(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    setDeletingUserId(userId);
+    try {
+      await deleteUser.mutateAsync(userId);
+      toast.success('User permanently removed from the system!');
+    } catch (error) {
+      toast.error('Failed to delete user.');
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -249,60 +262,99 @@ const Team: React.FC = () => {
 
                 {/* Admin controls - collapsible */}
                 {isAdmin && isExpanded && (
-                  <div className="mt-3 flex gap-2">
-                    <Select
-                      value={member.role || ''}
-                      onValueChange={(value) => handleRoleAssign(member.id, value as UserRole)}
-                    >
-                      <SelectTrigger className="flex-1 h-8 text-xs bg-background">
-                        <SelectValue placeholder="Assign role..." />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-background border border-border shadow-lg">
-                        {allRoles.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            <div className="flex items-center gap-2 text-xs">
-                              {roleIcons[role]}
-                              {roleLabels[role]}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex gap-2">
+                      <Select
+                        value={member.role || ''}
+                        onValueChange={(value) => handleRoleAssign(member.id, value as UserRole)}
+                      >
+                        <SelectTrigger className="flex-1 h-8 text-xs bg-background">
+                          <SelectValue placeholder="Assign role..." />
+                        </SelectTrigger>
+                        <SelectContent className="z-50 bg-background border border-border shadow-lg">
+                          {allRoles.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              <div className="flex items-center gap-2 text-xs">
+                                {roleIcons[role]}
+                                {roleLabels[role]}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
-                    {member.role && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            {removingUserId === member.id ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-3 h-3" />
-                            )}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="mx-4">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remove user role?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will remove {member.name}'s role. They'll lose access until reassigned.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleRemoveUser(member.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      {member.role && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title="Remove role"
                             >
-                              Remove
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
+                              {removingUserId === member.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Shield className="w-3 h-3" />
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="mx-4">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove user role?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will remove {member.name}'s role. They'll lose access until reassigned.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRemoveUser(member.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remove Role
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+
+                    {/* Delete user permanently */}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="w-full h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                        >
+                          {deletingUserId === member.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                          ) : (
+                            <Trash2 className="w-3 h-3 mr-1" />
+                          )}
+                          Remove from App
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="mx-4">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Permanently remove user?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete <span className="font-semibold">{member.name}</span> from the system. 
+                            Their account, role, and all associated data will be removed. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteUser(member.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete Permanently
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 )}
               </CardContent>
