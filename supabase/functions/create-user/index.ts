@@ -65,10 +65,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Assign role using the admin client (service role bypasses RLS)
+    // Assign role: delete existing then insert (service role bypasses RLS)
+    await adminClient.from("user_roles").delete().eq("user_id", newUser.user.id);
     const { error: roleError } = await adminClient
       .from("user_roles")
-      .upsert({ user_id: newUser.user.id, role }, { onConflict: "user_id" });
+      .insert({ user_id: newUser.user.id, role });
 
     if (roleError) {
       return new Response(JSON.stringify({ error: roleError.message }), {
