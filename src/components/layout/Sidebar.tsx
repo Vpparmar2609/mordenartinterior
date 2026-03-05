@@ -68,6 +68,12 @@ const navItems: NavItem[] = [
     roles: ['admin', 'execution_manager', 'site_supervisor'],
   },
   {
+    icon: <ListTodo className="w-5 h-5" />,
+    label: 'Task Board',
+    href: '/task-board',
+    roles: ['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor', 'account_manager'],
+  },
+  {
     icon: <AlertTriangle className="w-5 h-5" />,
     label: 'Issues',
     href: '/issues',

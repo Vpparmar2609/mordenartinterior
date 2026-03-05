@@ -21,6 +21,7 @@ const Messages = lazy(() => import("./pages/Messages"));
 const Documents = lazy(() => import("./pages/Documents"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Accounts = lazy(() => import("./pages/Accounts"));
+const TaskBoard = lazy(() => import("./pages/TaskBoard"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const ProfilePage = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -106,6 +107,11 @@ const App = () => (
                 <Route path="/execution-tasks" element={
                   <ProtectedRoute allowedRoles={['admin', 'execution_manager', 'site_supervisor']}>
                     <ExecutionTasks />
+                  </ProtectedRoute>
+                } />
+                <Route path="/task-board" element={
+                  <ProtectedRoute allowedRoles={['admin', 'design_head', 'designer', 'execution_manager', 'site_supervisor', 'account_manager']}>
+                    <TaskBoard />
                   </ProtectedRoute>
                 } />
                 <Route path="/issues" element={
