@@ -80,38 +80,27 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   const onSubmit = async (data: CreateUserFormData) => {
     setIsLoading(true);
     try {
-      // Create the user using Supabase auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            name: data.name,
-          },
+      // Create the user via edge function (bypasses signup disabled)
+      const { data: result, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: data.email,
+          password: data.password,
+          name: data.name,
+          role: data.role,
         },
       });
 
-      if (authError) throw authError;
+      if (error) throw error;
+      if (result?.error) throw new Error(result.error);
 
-      if (authData.user) {
-        // Assign role using RPC
-        const { error: roleError } = await supabase.rpc('assign_user_role', {
-          target_user_id: authData.user.id,
-          target_role: data.role as UserRole,
-        });
+      // Show credentials for sharing
+      setCreatedCredentials({
+        email: data.email,
+        password: data.password,
+      });
 
-        if (roleError) throw roleError;
-
-        // Show credentials for sharing
-        setCreatedCredentials({
-          email: data.email,
-          password: data.password,
-        });
-
-        toast.success('User created successfully!');
-        onSuccess();
-      }
+      toast.success('User created successfully!');
+      onSuccess();
     } catch (error: any) {
       toast.error(error.message || 'Failed to create user');
     } finally {
