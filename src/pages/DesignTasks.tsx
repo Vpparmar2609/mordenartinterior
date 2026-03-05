@@ -24,6 +24,8 @@ import { TaskFileUpload } from '@/components/tasks/TaskFileUpload';
 import { FileApprovalSection } from '@/components/approvals/FileApprovalSection';
 import { differenceInDays } from 'date-fns';
 import { DesignTimelineEditor } from '@/components/tasks/DesignTimelineEditor';
+import { CustomTasksSection } from '@/components/tasks/CustomTasksSection';
+import { CreateCategoryTaskDialog } from '@/components/tasks/CreateCategoryTaskDialog';
 
 const getDesignDaysLeft = (startDate: string | null, endDate: string | null) => {
   if (!startDate || !endDate) return null;
@@ -191,6 +193,7 @@ const DesignTasks: React.FC = () => {
           <TabsList>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="approvals">File Approvals</TabsTrigger>
+            <TabsTrigger value="urgent-tasks">Urgent Tasks</TabsTrigger>
           </TabsList>
           
           <TabsContent value="tasks" className="space-y-4">
@@ -219,6 +222,17 @@ const DesignTasks: React.FC = () => {
           
           <TabsContent value="approvals">
             <FileApprovalSection type="design" />
+          </TabsContent>
+          <TabsContent value="urgent-tasks" className="space-y-4">
+            <div className="flex justify-end">
+              <CreateCategoryTaskDialog category="designing" />
+            </div>
+            <CustomTasksSection
+              category="designing"
+              canCreate={isAdmin || isDesignHead}
+              canApprove={isAdmin || isDesignHead}
+              showProjectGrouping
+            />
           </TabsContent>
         </Tabs>
       ) : (

@@ -93,6 +93,53 @@ export type Database = {
           },
         ]
       }
+      custom_task_files: {
+        Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
+          file_name: string
+          file_url: string
+          id: string
+          rejection_reason: string | null
+          task_id: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          file_name: string
+          file_url: string
+          id?: string
+          rejection_reason?: string | null
+          task_id: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          rejection_reason?: string | null
+          task_id?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_task_files_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "custom_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_tasks: {
         Row: {
           assigned_to: string
@@ -104,6 +151,8 @@ export type Database = {
           id: string
           priority: Database["public"]["Enums"]["task_priority"]
           project_id: string
+          resolved_at: string | null
+          resolved_by: string | null
           status: string
           title: string
           updated_at: string
@@ -118,6 +167,8 @@ export type Database = {
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -132,6 +183,8 @@ export type Database = {
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
           status?: string
           title?: string
           updated_at?: string
