@@ -134,6 +134,7 @@ export const useUsers = () => {
     error: usersQuery.error,
     assignRole,
     removeUserRole,
+    deleteUser,
     getUsersByRole,
     refetch: usersQuery.refetch,
   };
