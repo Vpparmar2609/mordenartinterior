@@ -570,6 +570,21 @@ const Accounts: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ─── Tasks Tab ─── */}
+        <TabsContent value="tasks" className="space-y-4">
+          {isAdmin && (
+            <div className="flex justify-end">
+              <CreateCategoryTaskDialog category="account_manager" />
+            </div>
+          )}
+          <CustomTasksSection
+            category="account_manager"
+            canCreate={isAdmin}
+            canApprove={isAdmin}
+            showProjectGrouping
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Client Dialogs */}
