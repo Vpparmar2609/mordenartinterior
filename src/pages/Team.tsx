@@ -70,8 +70,9 @@ const Team: React.FC = () => {
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<UserRole | 'all'>('all');
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
-  const { users, isLoading, assignRole, removeUserRole, refetch } = useUsers();
+  const { users, isLoading, assignRole, removeUserRole, deleteUser, refetch } = useUsers();
   const { role: currentUserRole } = useAuth();
 
   const isAdmin = currentUserRole === 'admin';
