@@ -121,6 +121,18 @@ const Team: React.FC = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    setDeletingUserId(userId);
+    try {
+      await deleteUser.mutateAsync(userId);
+      toast.success('User permanently removed from the system!');
+    } catch (error) {
+      toast.error('Failed to delete user.');
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   const roles: (UserRole | 'all')[] = ['all', ...allRoles];
 
   if (isLoading) {
