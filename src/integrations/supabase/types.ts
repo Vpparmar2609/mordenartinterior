@@ -93,6 +93,59 @@ export type Database = {
           },
         ]
       }
+      custom_tasks: {
+        Row: {
+          assigned_to: string
+          category: Database["public"]["Enums"]["task_category"]
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: Database["public"]["Enums"]["task_priority"]
+          project_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to: string
+          category: Database["public"]["Enums"]["task_category"]
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          project_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string
+          category?: Database["public"]["Enums"]["task_category"]
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          project_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_report_photos: {
         Row: {
           caption: string | null
@@ -1299,6 +1352,8 @@ export type Database = {
         | "handover_pending"
         | "snag_fix"
         | "completed"
+      task_category: "designing" | "execution" | "account_manager"
+      task_priority: "normal" | "urgent"
       task_status: "pending" | "in_progress" | "completed" | "revision"
       vendor_payment_stage:
         | "pop_work"
@@ -1466,6 +1521,8 @@ export const Constants = {
         "snag_fix",
         "completed",
       ],
+      task_category: ["designing", "execution", "account_manager"],
+      task_priority: ["normal", "urgent"],
       task_status: ["pending", "in_progress", "completed", "revision"],
       vendor_payment_stage: [
         "pop_work",
