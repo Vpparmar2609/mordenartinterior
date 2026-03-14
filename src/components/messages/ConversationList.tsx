@@ -82,11 +82,15 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                   Internal
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1 truncate">
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                 {conversation.lastMessage ? (
                   <>
                     <span className="font-medium">{conversation.lastSenderName}:</span>{' '}
                     {conversation.lastMessage}
+                  </>
+                ) : (
+                  <span className="italic">No messages yet</span>
+                )}
                   </>
                 ) : (
                   <span className="italic">No messages yet</span>
