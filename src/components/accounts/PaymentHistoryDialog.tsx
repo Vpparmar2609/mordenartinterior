@@ -94,13 +94,7 @@ export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
         .single();
 
       if (transaction?.proof_url) {
-        // Extract file path - handle both legacy URLs and new paths
-        let filePath = transaction.proof_url;
-        if (transaction.proof_url.includes('://')) {
-          const urlParts = transaction.proof_url.split('/');
-          filePath = urlParts.slice(-2).join('/');
-        }
-        await supabase.storage.from('payment-proofs').remove([filePath]);
+        await supabase.storage.from('payment-proofs').remove([transaction.proof_url]);
       }
 
       const { error } = await supabase
