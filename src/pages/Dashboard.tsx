@@ -80,7 +80,8 @@ const getMotivationalMessage = (role: string | null) => {
   return pool[dayOfYear % pool.length];
 };
 
-const WORKDAY_END_HOUR = 19; // 7 PM
+const WORKDAY_START_HOUR = 10; // 10 AM
+const WORKDAY_END_HOUR = 18; // 6 PM
 
 const Dashboard: React.FC = () => {
   const { profile, role, isLoading } = useAuth();
