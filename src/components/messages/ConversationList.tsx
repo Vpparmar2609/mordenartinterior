@@ -91,10 +91,6 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                 ) : (
                   <span className="italic">No messages yet</span>
                 )}
-                  </>
-                ) : (
-                  <span className="italic">No messages yet</span>
-                )}
               </p>
             </div>
             <div className="flex flex-col items-end gap-1">
