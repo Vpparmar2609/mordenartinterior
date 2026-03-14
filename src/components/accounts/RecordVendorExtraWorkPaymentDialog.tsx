@@ -89,7 +89,7 @@ export const RecordVendorExtraWorkPaymentDialog: React.FC<RecordVendorExtraWorkP
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="v-ew-pay-amount">Amount (₹) *</Label>
-            <Input id="v-ew-pay-amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" min="1" step="100" required />
+            <Input id="v-ew-pay-amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" min="1" step="any" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="v-ew-pay-date">Payment Date *</Label>

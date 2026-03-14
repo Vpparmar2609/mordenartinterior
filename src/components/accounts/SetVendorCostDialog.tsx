@@ -57,7 +57,7 @@ export const SetVendorCostDialog: React.FC<SetVendorCostDialogProps> = ({
             <Input
               id="vendorCost" type="number" value={totalCost}
               onChange={(e) => setTotalCost(e.target.value)}
-              placeholder="e.g., 1500000" min="0" step="1000" required
+              placeholder="e.g., 1500000" min="0" step="any" required
             />
           </div>
           {costValue > 0 && (
