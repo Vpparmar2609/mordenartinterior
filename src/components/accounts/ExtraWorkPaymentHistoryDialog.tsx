@@ -92,9 +92,7 @@ export const ExtraWorkPaymentHistoryDialog: React.FC<ExtraWorkPaymentHistoryDial
         .single();
 
       if (payment?.proof_url) {
-        const urlParts = payment.proof_url.split('/');
-        const filePath = urlParts.slice(-2).join('/');
-        await supabase.storage.from('payment-proofs').remove([filePath]);
+        await supabase.storage.from('payment-proofs').remove([payment.proof_url]);
       }
 
       const { error } = await supabase
