@@ -61,7 +61,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   }
 
   return (
-    <ScrollArea className="h-[calc(100vh-20rem)]">
+    <ScrollArea className="h-full max-h-[calc(100vh-20rem)]">
       {filteredConversations.map((conversation) => (
         <div
           key={conversation.id}
