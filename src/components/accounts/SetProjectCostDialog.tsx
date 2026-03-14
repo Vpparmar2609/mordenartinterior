@@ -82,7 +82,7 @@ export const SetProjectCostDialog: React.FC<SetProjectCostDialogProps> = ({
               onChange={(e) => setTotalCost(e.target.value)}
               placeholder="e.g., 2000000"
               min="0"
-              step="1000"
+              step="any"
               required
             />
           </div>
