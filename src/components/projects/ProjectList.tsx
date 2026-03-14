@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ProjectWithDetails } from '@/hooks/useProjects';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { MapPin, Calendar, User, Clock, CalendarPlus } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { MapPin, Calendar, User, Clock, CalendarPlus, IndianRupee } from 'lucide-react';
 import { statusLabels, statusColors } from '@/types/project';
 import { cn } from '@/lib/utils';
 import { differenceInDays, format } from 'date-fns';
@@ -80,11 +81,11 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, compact = fa
           <div
             key={project.id}
             onClick={() => navigate(`/projects/${project.id}`)}
-            className="p-4 rounded-xl border border-border/50 bg-card/60 hover:bg-card hover:border-primary/30 transition-all cursor-pointer"
+            className="group p-5 rounded-xl border border-border/50 bg-card/60 hover:bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-200 cursor-pointer"
           >
             <div className="flex items-start justify-between gap-4 mb-3">
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-foreground truncate">{project.client_name}</h3>
+                <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">{project.client_name}</h3>
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                   <MapPin className="w-3 h-3" />
                   {project.location}
@@ -101,8 +102,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, compact = fa
                 {project.bhk} BHK
               </div>
               <div className="flex items-center gap-1">
-                <CalendarPlus className="w-3 h-3" />
-                Created: {format(new Date(project.created_at), 'dd MMM')}
+                <IndianRupee className="w-3 h-3" />
+                {project.budget_range || 'Not set'}
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
@@ -113,6 +114,32 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, compact = fa
                 {daysDisplay.text}
               </div>
             </div>
+
+            {/* Team Avatars */}
+            {(project.design_head_profile || project.execution_manager_profile) && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs text-muted-foreground">Team:</span>
+                <div className="flex -space-x-2">
+                  {project.design_head_profile && (
+                    <Avatar className="w-6 h-6 border-2 border-card">
+                      <AvatarFallback className="text-[10px] bg-accent text-accent-foreground">
+                        {project.design_head_profile.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  {project.execution_manager_profile && (
+                    <Avatar className="w-6 h-6 border-2 border-card">
+                      <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
+                        {project.execution_manager_profile.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground truncate">
+                  {[project.design_head_profile?.name, project.execution_manager_profile?.name].filter(Boolean).join(', ')}
+                </span>
+              </div>
+            )}
 
             <div className="flex items-center gap-2">
               <Progress value={project.progress} className="flex-1 h-2" />
