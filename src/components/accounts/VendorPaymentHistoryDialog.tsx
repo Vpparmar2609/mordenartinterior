@@ -74,12 +74,7 @@ export const VendorPaymentHistoryDialog: React.FC<VendorPaymentHistoryDialogProp
   });
 
   const getSignedUrl = async (proofUrl: string) => {
-    let filePath = proofUrl;
-    if (proofUrl.includes('://')) {
-      const urlParts = proofUrl.split('/');
-      filePath = urlParts.slice(-3).join('/');
-    }
-    const { data, error } = await supabase.storage.from('payment-proofs').createSignedUrl(filePath, 3600);
+    const { data, error } = await supabase.storage.from('payment-proofs').createSignedUrl(proofUrl, 3600);
     if (error) { console.error('Error getting signed URL:', error); return; }
     if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   };

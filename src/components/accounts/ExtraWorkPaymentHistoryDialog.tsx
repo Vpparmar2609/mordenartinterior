@@ -121,13 +121,15 @@ export const ExtraWorkPaymentHistoryDialog: React.FC<ExtraWorkPaymentHistoryDial
   });
 
   const getSignedUrl = async (proofUrl: string) => {
-    const urlParts = proofUrl.split('/');
-    const filePath = urlParts.slice(-2).join('/');
-    
-    const { data } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from('payment-proofs')
-      .createSignedUrl(filePath, 3600);
+      .createSignedUrl(proofUrl, 3600);
 
+    if (error) {
+      console.error('Error getting signed URL:', error);
+      toast({ title: 'Error', description: 'Could not load proof file.', variant: 'destructive' });
+      return;
+    }
     if (data?.signedUrl) {
       window.open(data.signedUrl, '_blank');
     }

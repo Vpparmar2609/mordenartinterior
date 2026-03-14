@@ -123,17 +123,9 @@ export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
   });
 
   const getSignedUrl = async (proofUrl: string) => {
-    // proofUrl is now just the file path (e.g., "projectId/filename.jpg")
-    // If it's a full URL (legacy), extract the path
-    let filePath = proofUrl;
-    if (proofUrl.includes('://')) {
-      const urlParts = proofUrl.split('/');
-      filePath = urlParts.slice(-2).join('/');
-    }
-    
     const { data, error } = await supabase.storage
       .from('payment-proofs')
-      .createSignedUrl(filePath, 3600);
+      .createSignedUrl(proofUrl, 3600);
 
     if (error) {
       console.error('Error getting signed URL:', error);
