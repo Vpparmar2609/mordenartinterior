@@ -57,12 +57,7 @@ export const VendorPaymentHistoryDialog: React.FC<VendorPaymentHistoryDialogProp
         .eq('id', id)
         .single();
       if ((transaction as any)?.proof_url) {
-        let filePath = (transaction as any).proof_url;
-        if (filePath.includes('://')) {
-          const urlParts = filePath.split('/');
-          filePath = urlParts.slice(-3).join('/');
-        }
-        await supabase.storage.from('payment-proofs').remove([filePath]);
+        await supabase.storage.from('payment-proofs').remove([(transaction as any).proof_url]);
       }
       const { error } = await supabase.from('vendor_payment_transactions' as any).delete().eq('id', id);
       if (error) throw error;
@@ -79,12 +74,7 @@ export const VendorPaymentHistoryDialog: React.FC<VendorPaymentHistoryDialogProp
   });
 
   const getSignedUrl = async (proofUrl: string) => {
-    let filePath = proofUrl;
-    if (proofUrl.includes('://')) {
-      const urlParts = proofUrl.split('/');
-      filePath = urlParts.slice(-3).join('/');
-    }
-    const { data, error } = await supabase.storage.from('payment-proofs').createSignedUrl(filePath, 3600);
+    const { data, error } = await supabase.storage.from('payment-proofs').createSignedUrl(proofUrl, 3600);
     if (error) { console.error('Error getting signed URL:', error); return; }
     if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   };
