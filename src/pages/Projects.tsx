@@ -169,13 +169,8 @@ const Projects: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className={cn(
-          viewMode === 'grid' 
-            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-            : 'space-y-4'
-        )}>
-          <ProjectList projects={filteredProjects} compact={viewMode === 'list'} />
-        </div>
+        <ProjectList projects={filteredProjects} compact={viewMode === 'list'} />
+      
       )}
 
       {/* Create Project Dialog */}

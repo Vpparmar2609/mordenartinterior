@@ -407,7 +407,7 @@ const ExecutionTasks: React.FC = () => {
           
           <TabsContent value="tasks" className="space-y-4">
             {/* Search */}
-            <div className="relative max-w-md">
+            <div className="relative lg:max-w-lg">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search projects..."
@@ -423,7 +423,7 @@ const ExecutionTasks: React.FC = () => {
                 <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {filteredProjects.map((project, index) => renderProjectCard(project, index))}
               </div>
             )}
@@ -447,7 +447,7 @@ const ExecutionTasks: React.FC = () => {
       ) : (
         <>
           {/* Search */}
-          <div className="relative max-w-md">
+          <div className="relative lg:max-w-lg">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search projects..."
@@ -463,7 +463,7 @@ const ExecutionTasks: React.FC = () => {
               <p className="text-muted-foreground">No execution tasks found. Projects need to be assigned to you.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {filteredProjects.map((project, index) => renderProjectCard(project, index))}
             </div>
           )}

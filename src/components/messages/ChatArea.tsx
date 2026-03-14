@@ -6,15 +6,16 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMessages, MessageWithSender } from '@/hooks/useMessages';
 import { useAuth } from '@/contexts/AuthContext';
-import { Send, Loader2, Lock, Globe, MessageSquare } from 'lucide-react';
+import { Send, Loader2, Lock, Globe, MessageSquare, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Conversation } from '@/hooks/useConversations';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
+  onBack?: () => void;
 }
 
-export const ChatArea: React.FC<ChatAreaProps> = ({ conversation }) => {
+export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, onBack }) => {
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
@@ -90,7 +91,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation }) => {
                 </AvatarFallback>
               </Avatar>
             )}
-            <div className={cn('max-w-[70%]', isOwn && 'text-right')}>
+            <div className={cn('max-w-[75%]', isOwn && 'text-right')}>
               {!isOwn && (
                 <p className="text-xs text-muted-foreground mb-1">{msg.sender?.name}</p>
               )}
@@ -122,11 +123,16 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation }) => {
   }
 
   return (
-    <Card className="glass-card lg:col-span-2 flex flex-col">
+    <Card className="glass-card lg:col-span-2 flex flex-col h-full">
       <CardHeader className="pb-3 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg">{conversation.projectName}</CardTitle>
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9" onClick={onBack}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-lg truncate">{conversation.projectName}</CardTitle>
             <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
               {isInternal ? (
                 <>
